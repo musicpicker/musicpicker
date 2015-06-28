@@ -14,7 +14,7 @@ router.get('/', function(req, res) {
         UserId: req.user.id
       }
     }).then(function(result) {
-      res.json(result);
+        return res.json(result);
     });
   }
   else {
@@ -24,7 +24,12 @@ router.get('/', function(req, res) {
         name: req.query['name']
       }
     }).then(function(result) {
-      res.json(result);
+      if (result === null) {
+        return res.sendStatus(404);
+      }
+      else {
+        return res.json(result);
+      }
     });
   }
 });
@@ -33,8 +38,8 @@ router.post('/', function(req, res) {
   Models.Device.create({
     UserId: req.user.id,
     name: req.body['name']
-  }).then(function() {
-    res.sendStatus(200);
+  }).then(function(device) {
+    res.json({Id: device.id});
   });
 });
 
