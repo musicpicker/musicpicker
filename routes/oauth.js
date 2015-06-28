@@ -3,6 +3,7 @@ var router = express.Router();
 
 var passport = require('passport');
 var ResourceOwnerPasswordStrategy = require('passport-oauth2-resource-owner-password').Strategy;
+var BearerStrategy = require('passport-http-bearer').Strategy;
 var oauth2orize = require('oauth2orize');
 var uuid = require('node-uuid');
 
@@ -23,7 +24,7 @@ passport.use(new ResourceOwnerPasswordStrategy(
         return done(null, clientId, false);
       }
       else {
-        return done(null, clientId, username);
+        return done(null, clientId, user);
       }
     });
   }
@@ -59,5 +60,22 @@ router.post('/token',
   server.token(),
   server.errorHandler()
 );
+
+passport.use(new BearerStrategy(
+  function(token, done) {
+    Models.User.findOne({
+      where: {
+        token: token
+      }
+    }).then(function(user) {
+      if (user !== null) {
+        return done(null, user);
+      }
+      else {
+        return done(null, false);
+      }
+    });
+  }
+));
 
 module.exports = router;

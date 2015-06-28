@@ -9,6 +9,7 @@ var passport = require('passport');
 
 var auth = require('./routes/oauth');
 var account = require('./routes/account');
+var devices = require('./routes/devices');
 var routes = require('./routes/index');
 
 var app = express();
@@ -30,6 +31,7 @@ app.use(passport.initialize());
 app.use('/', routes);
 app.use('/oauth', auth);
 app.use('/api/account', account);
+app.use('/api/devices', devices);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

@@ -17,6 +17,7 @@
     "passport-oauth2-resource-owner-password": "~1.0.0",
     "oauth2orize": "~1.0.1",
     "sequelize": "~3.3.2",
-    "node-uuid": "~1.4.3"
+    "node-uuid": "~1.4.3",
+    "passport-http-bearer": "~1.0.1"
   }
 }
