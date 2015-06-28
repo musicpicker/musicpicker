@@ -3,7 +3,15 @@ var sequelize = require('./database');
 
 var User = sequelize.define('User', {
   username: Sequelize.STRING,
-  password: Sequelize.STRING
+  password: Sequelize.STRING,
+  token: Sequelize.STRING,
+}, {
+  indexes: [
+    {
+      unique: true,
+      fields: ['username']
+    }
+  ]
 });
 
 var Device = sequelize.define('Device', {
@@ -36,14 +44,10 @@ Artist.hasMany(Album, {as: 'Albums'});
 Album.hasMany(Track, {as: 'Tracks'});
 Track.belongsToMany(Device, {through: 'DeviceTracks'});
 
-User.sync();
-Device.sync();
-Artist.sync();
-Album.sync();
-Track.sync();
-DeviceTracks.sync();
+sequelize.sync();
 
 module.exports = {
+  User: User,
   Device: Device,
   Artist: Artist,
   Album: Album,

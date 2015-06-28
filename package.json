@@ -13,7 +13,10 @@
     "jade": "~1.9.2",
     "morgan": "~1.5.1",
     "serve-favicon": "~2.2.0",
-    "knex": "~0.8.6",
-    "bookshelf": "~0.8.1"
+    "passport": "~0.2.2",
+    "passport-oauth2-resource-owner-password": "~1.0.0",
+    "oauth2orize": "~1.0.1",
+    "sequelize": "~3.3.2",
+    "node-uuid": "~1.4.3"
   }
 }
