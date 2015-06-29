@@ -2,73 +2,71 @@ var express = require('express');
 var router = express.Router();
 
 var passport = require('passport');
-
-var Models = require('../models');
+var models = require('../models');
 
 router.use(passport.authenticate('bearer', {session: false}));
 
 router.get('/', function(req, res) {
   if (req.query['name'] === undefined) {
-    Models.Device.findAll({
-      where: {
-        UserId: req.user.id
-      }
-    }).then(function(result) {
-        return res.json(result);
+    models.Device.find({
+      OwnerId: req.user.id
+    }, function(err, devices) {
+      return res.json(devices);
     });
   }
   else {
-    Models.Device.findOne({
-      where: {
-        UserId: req.user.id,
-        name: req.query['name']
-      }
-    }).then(function(result) {
-      if (result === null) {
+    models.Device.findOne({
+      OwnerId: req.user.id,
+      Name: req.query['name']
+    }, function(err, device) {
+      if (device === null) {
         return res.sendStatus(404);
       }
       else {
-        return res.json(result);
+        return res.json(device);
       }
     });
   }
 });
 
 router.post('/', function(req, res) {
-  Models.Device.create({
-    UserId: req.user.id,
-    name: req.body['name']
-  }).then(function(device) {
-    res.json({Id: device.id});
+  models.Device.create({
+    OwnerId: req.user.id,
+    Name: req.body['name'],
+    RegistrationDate: Date.now()
+  }, function(err, device) {
+    return res.json({Id: device._id});
   });
 });
 
 router.get('/:id', function(req, res) {
-  Models.Device.findOne({
-    where: {
-      id: req.params['id'],
-      UserId: req.user.id
+  models.Device.findOne({
+    _id: req.params['id'],
+    OwnerId: req.user.id
+  }, function(err, device) {
+    if (device === null) {
+      return res.sendStatus(404);
     }
-  }).then(function(device) {
-    res.json(device);
+    return res.json(device);
   });
 })
 
 router.delete('/:id', function(req, res) {
-  Models.Device.findOne({
-    where: {
-      id: req.params['id'],
-      UserId: req.user.id
+  models.Device.remove({
+    _id: req.params['id'],
+    OwnerId: req.user.id
+  }, function(err) {
+    if (err) {
+      return res.sendStatus(400);
     }
-  }).then(function(device) {
-    device.destroy().then(function() {
-      res.sendStatus(204);
-    });
+    else {
+      return res.sendStatus(204);
+    }
   });
 });
 
 router.post('/:id/submit', function(req, res) {
-  Models.DeviceTracks.destroy({
+  models.DeviceTracks.destroy({
     where: {
       DeviceId: req.params['id']
     }

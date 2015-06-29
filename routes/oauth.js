@@ -7,20 +7,18 @@ var BearerStrategy = require('passport-http-bearer').Strategy;
 var oauth2orize = require('oauth2orize');
 var uuid = require('node-uuid');
 
-var Models = require('../models');
+var models = require('../models');
 
 passport.use(new ResourceOwnerPasswordStrategy(
   function(clientId, clientSecret, username, password, done) {
     var sha = require('crypto').createHash('sha256');
     sha.update(password);
 
-    Models.User.findOne({
-      where: {
-        username: username,
-        password: sha.digest('hex')
-      }
-    }).then(function(user) {
-      if (user === null) {
+    models.User.findOne({
+      Username: username,
+      Password: sha.digest('hex')
+    }, function(err, user) {
+      if (err) {
         return done(null, clientId, false);
       }
       else {
@@ -36,17 +34,27 @@ server.exchange(oauth2orize.exchange.password(
     var sha = require('crypto').createHash('sha256');
     sha.update(password);
 
-    Models.User.findOne({
-      where: {
-        username: username,
-        password: sha.digest('hex')
+    models.User.findOne({
+      Username: username,
+      Password: sha.digest('hex')
+    }, function(err, user) {
+      if (err) {
+        return done(null, false);
       }
-    }).then(function(user) {
-      if (user.token === null) {
-        user.token = uuid.v4();
-        user.save();
+      else {
+        console.log(user);
+        if (user.Token === undefined) {
+          var token = uuid.v4();
+          models.User.findOneAndUpdate({_id: user._id}, {Token: token}, {new: true},
+            function(err, user) {
+              return done(null, user.Token);
+            }
+          );
+        }
+        else {
+          return done(null, user.Token);
+        }
       }
-      return done(null, user.token);
     });
   }
 ));
@@ -63,11 +71,9 @@ router.post('/token',
 
 passport.use(new BearerStrategy(
   function(token, done) {
-    Models.User.findOne({
-      where: {
-        token: token
-      }
-    }).then(function(user) {
+    models.User.findOne({
+      Token: token
+    }, function(err, user) {
       if (user !== null) {
         return done(null, user);
       }
