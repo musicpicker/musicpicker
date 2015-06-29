@@ -6,6 +6,7 @@ var models = require('../models');
 
 var Promise = require('bluebird');
 var kue = require('kue');
+var redis = require('redis').createClient();
 
 queue = kue.createQueue();
 
@@ -72,62 +73,89 @@ router.delete('/:id', function(req, res) {
 
 function getArtist(submission) {
   return new Promise(function(resolve, reject) {
-    models.Artist.findOne({
-      Name: submission.Artist
-    }, function(err, artist) {
-      if (artist === null) {
-        models.Artist.create({
+    redis.get('musicpicker.submissions.artist.' + submission.Artist, function(err, reply) {
+      if (reply === null) {
+        models.Artist.findOne({
           Name: submission.Artist
         }, function(err, artist) {
-          resolve(artist);
-        })
+          if (artist === null) {
+            models.Artist.create({
+              Name: submission.Artist
+            }, function(err, artist) {
+              redis.set('musicpicker.submissions.artist.' + submission.Artist, artist._id);
+              resolve(artist._id);
+            })
+          }
+          else {
+            redis.set('musicpicker.submissions.artist.' + submission.Artist, artist._id);
+            resolve(artist._id);
+          }
+        });
       }
       else {
-        resolve(artist);
+        resolve(reply);
       }
     });
   });
 }
 
-function getAlbum(submission, artist) {
+function getAlbum(submission, artistId) {
   return new Promise(function(resolve, reject) {
-    models.Album.findOne({
-      Name: submission.Album,
-      ArtistId: artist._id
-    }, function(err, album) {
-      if (album  === null) {
-        models.Album.create({
+    redis.get('musicpicker.submissions.album.' + artistId + '.' + submission.Album, function(err, reply) {
+      if (reply === null) {
+        models.Album.findOne({
           Name: submission.Album,
-          ArtistId: artist._id,
-          Year: submission.Year
+          ArtistId: artistId
         }, function(err, album) {
-          resolve(album);
-        })
+          if (album  === null) {
+            models.Album.create({
+              Name: submission.Album,
+              ArtistId: artistId,
+              Year: submission.Year
+            }, function(err, album) {
+              redis.set('musicpicker.submissions.album.' + artistId + '.' + submission.Album, album._id);
+              resolve(album._id);
+            })
+          }
+          else {
+            redis.set('musicpicker.submissions.album.' + artistId + '.' + submission.Album, album._id);
+            resolve(album._id);
+          }
+        });
       }
       else {
-        resolve(album);
+        resolve(reply);
       }
     });
   });
 }
 
-function getTrack(submission, album) {
+function getTrack(submission, albumId) {
   return new Promise(function(resolve, reject) {
-    models.Track.findOne({
-      Name: submission.Title,
-      AlbumId: album._id
-    }, function(err, track) {
-      if (track  === null) {
-        models.Track.create({
+    redis.get('musicpicker.submissions.track.' + albumId + '.' + submission.Title, function(err, reply) {
+      if (reply === null) {
+        models.Track.findOne({
           Name: submission.Title,
-          AlbumId: album._id,
-          Number: submission.Number
+          AlbumId: albumId
         }, function(err, track) {
-          resolve(track);
-        })
+          if (track  === null) {
+            models.Track.create({
+              Name: submission.Title,
+              AlbumId: albumId,
+              Number: submission.Number
+            }, function(err, track) {
+              redis.set('musicpicker.submissions.track.' + albumId + '.' + submission.Title, track._id);
+              resolve(track._id);
+            })
+          }
+          else {
+            redis.set('musicpicker.submissions.track.' + albumId + '.' + submission.Title, track._id);
+            resolve(track._id);
+          }
+        });
       }
       else {
-        resolve(track);
+        resolve(reply);
       }
     });
   });
@@ -146,10 +174,10 @@ function clearDeviceTracks(deviceId, userId) {
   });
 }
 
-function addTrackToDevice(device, submission, track) {
+function addTrackToDevice(device, submission, trackId) {
   return new Promise(function(resolve, reject) {
     device.Tracks.push({
-      TrackId: track._id,
+      TrackId: trackId,
       DeviceTrackId: submission.Id,
       Duration: submission.Duration
     });
@@ -182,15 +210,15 @@ function processSubmission(deviceId, userId, submission) {
       }
     }
 
-    getArtist(submission).then(function(artist) {
-      getAlbum(submission, artist).then(function(album) {
-        getTrack(submission, album).then(function(track) {
-          console.log(track.Name);
+    getArtist(submission).then(function(artistId) {
+      getAlbum(submission, artistId).then(function(albumId) {
+        getTrack(submission, albumId).then(function(trackId) {
+          console.log(trackId);
           models.Device.findOne({
             _id: deviceId,
             OwnerId: userId
           }, function(err, device) {
-            addTrackToDevice(device, submission, track).then(function() {
+            addTrackToDevice(device, submission, trackId).then(function() {
               resolve();
             })
           });
