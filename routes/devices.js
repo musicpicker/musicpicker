@@ -73,6 +73,10 @@ router.delete('/:id', function(req, res) {
 
 function getArtist(submission) {
   return new Promise(function(resolve, reject) {
+    if (submission.Artist === null) {
+      return resolve();
+    }
+    console.log(submission.Artist);
     redis.get('musicpicker.submissions.artist.' + submission.Artist, function(err, reply) {
       if (reply === null) {
         models.Artist.findOne({
@@ -101,62 +105,84 @@ function getArtist(submission) {
 
 function getAlbum(submission, artistId) {
   return new Promise(function(resolve, reject) {
-    redis.get('musicpicker.submissions.album.' + artistId + '.' + submission.Album, function(err, reply) {
-      if (reply === null) {
-        models.Album.findOne({
-          Name: submission.Album,
-          ArtistId: artistId
-        }, function(err, album) {
-          if (album  === null) {
-            models.Album.create({
-              Name: submission.Album,
-              ArtistId: artistId,
-              Year: submission.Year
-            }, function(err, album) {
+    if (submission.Artist === null || submission.Album === null) {
+      return resolve();
+    }
+    console.log(submission.Album);
+    redis.get('musicpicker.submissions.artist.' + submission.Artist, function(err, artistId) {
+      redis.get('musicpicker.submissions.album.' + artistId + '.' + submission.Album, function(err, reply) {
+        if (reply === null) {
+          models.Album.findOne({
+            Name: submission.Album,
+            ArtistId: artistId
+          }, function(err, album) {
+            if (album  === null) {
+              models.Album.create({
+                Name: submission.Album,
+                ArtistId: artistId,
+                Year: submission.Year
+              }, function(err, album) {
+                console.log(err);
+                redis.set('musicpicker.submissions.album.' + artistId + '.' + submission.Album, album._id);
+                resolve(album._id);
+              })
+            }
+            else {
               redis.set('musicpicker.submissions.album.' + artistId + '.' + submission.Album, album._id);
               resolve(album._id);
-            })
-          }
-          else {
-            redis.set('musicpicker.submissions.album.' + artistId + '.' + submission.Album, album._id);
-            resolve(album._id);
-          }
-        });
-      }
-      else {
-        resolve(reply);
-      }
+            }
+          });
+        }
+        else {
+          resolve(reply);
+        }
+      });
     });
   });
 }
 
-function getTrack(submission, albumId) {
+function getTrack(submission, device) {
   return new Promise(function(resolve, reject) {
-    redis.get('musicpicker.submissions.track.' + albumId + '.' + submission.Title, function(err, reply) {
-      if (reply === null) {
-        models.Track.findOne({
-          Name: submission.Title,
-          AlbumId: albumId
-        }, function(err, track) {
-          if (track  === null) {
-            models.Track.create({
+    if (submission.Artist === null || submission.Album === null || submission.Title === null) {
+      return resolve();
+    }
+    console.log(submission.Title);
+
+    redis.get('musicpicker.submissions.artist.' + submission.Artist, function(err, artistId) {
+      redis.get('musicpicker.submissions.album.' + artistId + '.' + submission.Album, function(err, albumId) {
+        redis.get('musicpicker.submissions.track.' + albumId + '.' + submission.Title, function(err, reply) {
+          if (reply === null) {
+            models.Track.findOne({
               Name: submission.Title,
-              AlbumId: albumId,
-              Number: submission.Number
+              AlbumId: albumId
             }, function(err, track) {
-              redis.set('musicpicker.submissions.track.' + albumId + '.' + submission.Title, track._id);
-              resolve(track._id);
-            })
+              if (track  === null) {
+                models.Track.create({
+                  Name: submission.Title,
+                  AlbumId: albumId,
+                  Number: submission.Number
+                }, function(err, track) {
+                  redis.set('musicpicker.submissions.track.' + albumId + '.' + submission.Title, track._id);
+                  addTrackToDevice(device, submission, track._id).then(function() {
+                    resolve(track._id);
+                  });
+                })
+              }
+              else {
+                redis.set('musicpicker.submissions.track.' + albumId + '.' + submission.Title, track._id);
+                addTrackToDevice(device, submission, track._id).then(function() {
+                  resolve(track._id);
+                });
+              }
+            });
           }
           else {
-            redis.set('musicpicker.submissions.track.' + albumId + '.' + submission.Title, track._id);
-            resolve(track._id);
+            addTrackToDevice(device, submission, reply).then(function() {
+              resolve(reply);
+            });
           }
         });
-      }
-      else {
-        resolve(reply);
-      }
+      });
     });
   });
 }
@@ -232,11 +258,30 @@ function processSubmissions(deviceId, userId, submissions, done) {
   var begin = Date.now();
   clearDeviceTracks(deviceId, userId).then(function() {
     Promise.each(submissions, function(submission) {
-      return processSubmission(deviceId, userId, submission);
+      return getArtist(submission);
     }).then(function() {
-      console.log(Date.now() - begin);
-      done();
+      Promise.each(submissions, function(submission) {
+        return getAlbum(submission);
+      }).then(function() {
+        models.Device.findOne({
+          _id: deviceId,
+          OwnerId: userId
+        }, function(err, device) {
+          Promise.each(submissions, function(submission) {
+            return getTrack(submission, device);
+          });
+        });
+      });
     });
+
+      /*.then(function() {
+      Promise.each(submissions, function(submission) {
+        return processSubmission(deviceId, userId, submission);
+      }).then(function() {
+        console.log(Date.now() - begin);
+        done();
+      });
+    });*/
   });
 }
 
