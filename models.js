@@ -10,16 +10,22 @@ var userSchema = new Schema({
   Token: String
 });
 
+var deviceTracksSchema = new Schema({
+  TrackId: {type: Schema.Types.ObjectId, required: true},
+  DeviceTrackId: {type: String, required: true},
+  Duration: Number
+});
+
 var deviceSchema = new Schema({
   Name: {type: String, required: true},
   OwnerId: {type: Schema.Types.ObjectId, required: true},
   RegistrationDate: {type: Schema.Types.Date, required: true},
   AccessDate: Schema.Types.Date,
-  Tracks: Schema.Types.Mixed
+  Tracks: [deviceTracksSchema]
 });
 
 var artistSchema = new Schema({
-  Name: {type: String, required: true},
+  Name: {type: String, required: true, unique: true},
   MbId: String
 });
 
@@ -33,7 +39,7 @@ var albumSchema = new Schema({
 
 var trackSchema = new Schema({
   Name: {type: String, required: true},
-  Album: {type: Schema.Types.ObjectId, required: true},
+  AlbumId: {type: Schema.Types.ObjectId, required: true},
   Number: Number,
   MbId: String
 });
