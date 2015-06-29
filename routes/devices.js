@@ -5,6 +5,9 @@ var passport = require('passport');
 var models = require('../models');
 
 var Promise = require('bluebird');
+var kue = require('kue');
+
+queue = kue.createQueue();
 
 router.use(passport.authenticate('bearer', {session: false}));
 
@@ -130,11 +133,11 @@ function getTrack(submission, album) {
   });
 }
 
-function clearDeviceTracks(req) {
+function clearDeviceTracks(deviceId, userId) {
   return new Promise(function(resolve, reject) {
     models.Device.findOne({
-      _id: req.params['id'],
-      OwnerId: req.user.id
+      _id: deviceId,
+      OwnerId: userId
     }, function(err, device) {
       device.Tracks = undefined;
       device.save();
@@ -162,7 +165,7 @@ function addTrackToDevice(device, submission, track) {
   });
 }
 
-function processSubmission(req, submission) {
+function processSubmission(deviceId, userId, submission) {
   return new Promise(function(resolve, reject) {
     if (submission.Artist == null) {
         submission.Artist = "Unknown artist";
@@ -182,9 +185,10 @@ function processSubmission(req, submission) {
     getArtist(submission).then(function(artist) {
       getAlbum(submission, artist).then(function(album) {
         getTrack(submission, album).then(function(track) {
+          console.log(track.Name);
           models.Device.findOne({
-            _id: req.params['id'],
-            OwnerId: req.user.id
+            _id: deviceId,
+            OwnerId: userId
           }, function(err, device) {
             addTrackToDevice(device, submission, track).then(function() {
               resolve();
@@ -196,14 +200,35 @@ function processSubmission(req, submission) {
   });
 }
 
-router.post('/:id/submit', function(req, res) {
-  clearDeviceTracks(req).then(function() {
-    Promise.each(req.body, function(submission) {
-      return processSubmission(req, submission);
+function processSubmissions(deviceId, userId, submissions, done) {
+  var begin = Date.now();
+  clearDeviceTracks(deviceId, userId).then(function() {
+    Promise.each(submissions, function(submission) {
+      return processSubmission(deviceId, userId, submission);
     }).then(function() {
-      res.sendStatus(200);
+      console.log(Date.now() - begin);
+      done();
     });
   });
+}
+
+router.post('/:id/submit', function(req, res) {
+  queue.create('submissions', {
+    deviceId: req.params['id'],
+    userId: req.user.id,
+    submissions: req.body
+  }).save(function(err) {
+    if (err) {
+      return res.sendStatus(500);
+    }
+    else {
+      return res.sendStatus(200);
+    }
+  });
+});
+
+queue.process('submissions', function(job, done) {
+  processSubmissions(job.data.deviceId, job.data.userId, job.data.submissions, done);
 });
 
 module.exports = router;
