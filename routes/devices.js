@@ -23,7 +23,7 @@ router.get('/', function(req, res) {
         return res.sendStatus(404);
       }
       else {
-        return res.json(device);
+        return res.json({Id: device._id});
       }
     });
   }
@@ -65,7 +65,7 @@ router.delete('/:id', function(req, res) {
   });
 });
 
-router.post('/:id/submit', function(req, res) {
+/*router.post('/:id/submit', function(req, res) {
   models.DeviceTracks.destroy({
     where: {
       DeviceId: req.params['id']
@@ -90,6 +90,6 @@ router.post('/:id/submit', function(req, res) {
       console.log(submission);
     }.bind(this));
   });
-});
+});*/
 
 module.exports = router;
