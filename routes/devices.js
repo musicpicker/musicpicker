@@ -77,7 +77,7 @@ function getArtist(submission) {
       return resolve();
     }
     console.log(submission.Artist);
-    redis.get('musicpicker.submissions.artist.' + submission.Artist, function(err, reply) {
+    redis.get('musicpicker.submissions.' + submission.Artist, function(err, reply) {
       if (reply === null) {
         models.Artist.findOne({
           Name: submission.Artist
@@ -86,12 +86,12 @@ function getArtist(submission) {
             models.Artist.create({
               Name: submission.Artist
             }, function(err, artist) {
-              redis.set('musicpicker.submissions.artist.' + submission.Artist, artist._id);
+              redis.set('musicpicker.submissions.' + submission.Artist, artist._id);
               resolve(artist._id);
             })
           }
           else {
-            redis.set('musicpicker.submissions.artist.' + submission.Artist, artist._id);
+            redis.set('musicpicker.submissions.' + submission.Artist, artist._id);
             resolve(artist._id);
           }
         });
@@ -109,8 +109,8 @@ function getAlbum(submission, artistId) {
       return resolve();
     }
     console.log(submission.Album);
-    redis.get('musicpicker.submissions.artist.' + submission.Artist, function(err, artistId) {
-      redis.get('musicpicker.submissions.album.' + artistId + '.' + submission.Album, function(err, reply) {
+    redis.get('musicpicker.submissions.' + submission.Artist, function(err, artistId) {
+      redis.get('musicpicker.submissions.' + submission.Artist + '.' + submission.Album, function(err, reply) {
         if (reply === null) {
           models.Album.findOne({
             Name: submission.Album,
@@ -123,12 +123,12 @@ function getAlbum(submission, artistId) {
                 Year: submission.Year
               }, function(err, album) {
                 console.log(err);
-                redis.set('musicpicker.submissions.album.' + artistId + '.' + submission.Album, album._id);
+                redis.set('musicpicker.submissions.' + submission.Artist + '.' + submission.Album, album._id);
                 resolve(album._id);
               })
             }
             else {
-              redis.set('musicpicker.submissions.album.' + artistId + '.' + submission.Album, album._id);
+              redis.set('musicpicker.submissions.' + submission.Artist + '.' + submission.Album, album._id);
               resolve(album._id);
             }
           });
@@ -148,40 +148,38 @@ function getTrack(submission, device) {
     }
     console.log(submission.Title);
 
-    redis.get('musicpicker.submissions.artist.' + submission.Artist, function(err, artistId) {
-      redis.get('musicpicker.submissions.album.' + artistId + '.' + submission.Album, function(err, albumId) {
-        redis.get('musicpicker.submissions.track.' + albumId + '.' + submission.Title, function(err, reply) {
-          if (reply === null) {
-            models.Track.findOne({
-              Name: submission.Title,
-              AlbumId: albumId
-            }, function(err, track) {
-              if (track  === null) {
-                models.Track.create({
-                  Name: submission.Title,
-                  AlbumId: albumId,
-                  Number: submission.Number
-                }, function(err, track) {
-                  redis.set('musicpicker.submissions.track.' + albumId + '.' + submission.Title, track._id);
-                  addTrackToDevice(device, submission, track._id).then(function() {
-                    resolve(track._id);
-                  });
-                })
-              }
-              else {
-                redis.set('musicpicker.submissions.track.' + albumId + '.' + submission.Title, track._id);
+    redis.get('musicpicker.submissions.' + submission.Artist + '.' + submission.Album, function(err, albumId) {
+      redis.get('musicpicker.submissions.' + submission.Artist + '.' + submission.Album + '.' + submission.Title, function(err, reply) {
+        if (reply === null) {
+          models.Track.findOne({
+            Name: submission.Title,
+            AlbumId: albumId
+          }, function(err, track) {
+            if (track  === null) {
+              models.Track.create({
+                Name: submission.Title,
+                AlbumId: albumId,
+                Number: submission.Number
+              }, function(err, track) {
+                redis.set('musicpicker.submissions.' + submission.Artist + '.' + submission.Album + '.' + submission.Title, track._id);
                 addTrackToDevice(device, submission, track._id).then(function() {
                   resolve(track._id);
                 });
-              }
-            });
-          }
-          else {
-            addTrackToDevice(device, submission, reply).then(function() {
-              resolve(reply);
-            });
-          }
-        });
+              })
+            }
+            else {
+              redis.set('musicpicker.submissions.' + submission.Artist + '.' + submission.Album + '.' + submission.Title, track._id);
+              addTrackToDevice(device, submission, track._id).then(function() {
+                resolve(track._id);
+              });
+            }
+          });
+        }
+        else {
+          addTrackToDevice(device, submission, reply).then(function() {
+            resolve(reply);
+          });
+        }
       });
     });
   });
@@ -269,6 +267,9 @@ function processSubmissions(deviceId, userId, submissions, done) {
         }, function(err, device) {
           Promise.each(submissions, function(submission) {
             return getTrack(submission, device);
+          }).then(function() {
+            console.log('DA ENNNNND');
+            done();
           });
         });
       });
