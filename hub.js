@@ -92,9 +92,9 @@ function addTrackToQueue(deviceId, trackId) {
   });
 }
 
-function requestNext(socket, deviceId) {
+function requestNext(io, socket, deviceId) {
   tredis.set('musichub.device.' + deviceId + '.playing', 0);
-  sendClientState(io, socker, deviceId).then(function() {
+  sendClientState(io, socket, deviceId).then(function() {
     tredis.get('musichub.device.' + deviceId + '.connection').then(function(deviceClientId) {
       io.sockets.to(deviceClientId).emit('Stop');
     });
@@ -150,13 +150,14 @@ function hub(io, clientId, socket) {
         return addTrackToQueue(deviceId, trackId);
       }).then(function() {
         sendClientState(io, socket, deviceId).then(function() {
-          redis.get('musicpicker.device.' + deviceId + '.playing', function(err, playing) {
+          tredis.get('musichub.device.' + deviceId + '.playing').then(function(playing) {
             if (Boolean(parseInt(playing))) {
               requestNext(io, socket, deviceId);
             }
             else {
-              redis.set('musichub.device.' + deviceId + '.playing', 0);
-              play(io, socket, deviceId);
+              tredis.set('musichub.device.' + deviceId + '.playing', 0).then(function() {
+                play(io, socket, deviceId);
+              });
             }
           });
         })
