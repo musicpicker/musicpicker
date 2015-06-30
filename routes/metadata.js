@@ -59,4 +59,25 @@ router.get('/albums/:id', function(req, res) {
   });
 });
 
+router.get('/artists', function(req, res) {
+  var deviceId = req.query['device'];
+  var request = knex.select('artists.*').from('tracks').innerJoin('deviceTracks', 'tracks.Id', 'deviceTracks.TrackId').
+    where('deviceTracks.DeviceId', req.query['device']).innerJoin('albums', 'tracks.AlbumId', 'albums.Id').
+    innerJoin('artists', 'albums.ArtistId', 'artists.Id').distinct('artists.Id');
+
+    request.then(function(result) {
+      res.json(result);
+    }).catch(function(err) {
+      res.sendStatus(500);
+    });
+});
+
+router.get('/artists/:id', function(req, res) {
+  new models.Artist({
+    Id: req.params['id']
+  }).fetch().then(function(artist) {
+    res.json(artist);
+  });
+});
+
 module.exports = router;
