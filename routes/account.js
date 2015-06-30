@@ -1,5 +1,6 @@
 var express = require('express');
 var router = express.Router();
+
 var models = require('../models');
 
 router.post('/register', function(req, res) {
@@ -18,16 +19,14 @@ router.post('/register', function(req, res) {
   var sha = require('crypto').createHash('sha256');
   sha.update(req.body['Password']);
 
-  models.User.create({
+  new models.User({
     Username: req.body['Username'],
     Password: sha.digest('hex')
-  }, function(err, user) {
-    if (!err) {
-      return res.sendStatus(200);
-    }
-    else {
-      return res.sendStatus(500);
-    }
+  }).save().then(function(user) {
+    console.log(user);
+    return res.sendStatus(200);
+  }).catch(function(err) {
+    return res.sendStatus(500);
   });
 });
 

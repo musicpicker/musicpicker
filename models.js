@@ -1,53 +1,40 @@
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
+var bookshelf = require('bookshelf')(require('./knex'));
 
-mongoose.connect('localhost', 'musicpicker');
-
-var userSchema = new Schema({
-  Username: {type: String, required: true, unique: true},
-  Password: {type: String, required: true},
-  Email: String,
-  Token: String
+var User = bookshelf.Model.extend({
+  tableName: 'users',
+  idAttribute: 'Id'
 });
 
-var deviceTracksSchema = new Schema({
-  TrackId: {type: Schema.Types.ObjectId, required: true},
-  DeviceTrackId: {type: String, required: true},
-  Duration: Number
+var Device = bookshelf.Model.extend({
+  tableName: 'devices',
+  idAttribute: 'Id'
 });
 
-var deviceSchema = new Schema({
-  Name: {type: String, required: true},
-  OwnerId: {type: Schema.Types.ObjectId, required: true},
-  RegistrationDate: {type: Schema.Types.Date, required: true},
-  AccessDate: Schema.Types.Date,
-  Tracks: [deviceTracksSchema]
+var Artist = bookshelf.Model.extend({
+  tableName: 'artists',
+  idAttribute: 'Id'
 });
 
-var artistSchema = new Schema({
-  Name: {type: String, required: true, unique: true},
-  MbId: String
+var Album = bookshelf.Model.extend({
+  tableName: 'albums',
+  idAttribute: 'Id'
 });
 
-var albumSchema = new Schema({
-  Name: {type: String, required: true},
-  ArtistId: {type: Schema.Types.ObjectId, required: true},
-  Year: Number,
-  MbId: String,
-  Artwork: String
+var Track = bookshelf.Model.extend({
+  tableName: 'tracks',
+  idAttribute: 'Id'
 });
 
-var trackSchema = new Schema({
-  Name: {type: String, required: true},
-  AlbumId: {type: Schema.Types.ObjectId, required: true},
-  Number: Number,
-  MbId: String
+var DeviceTrack = bookshelf.Model.extend({
+  tableName: 'deviceTracks',
+  idAttribute: 'Id'
 });
 
 module.exports = {
-  User: mongoose.model('User', userSchema),
-  Device: mongoose.model('Device', deviceSchema),
-  Artist: mongoose.model('Artist', artistSchema),
-  Album: mongoose.model('Album', albumSchema),
-  Track: mongoose.model('Track', trackSchema)
+  User: User,
+  Device: Device,
+  Artist: Artist,
+  Album: Album,
+  Track: Track,
+  DeviceTrack: DeviceTrack
 }

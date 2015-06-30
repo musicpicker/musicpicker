@@ -6,12 +6,13 @@ module.exports = {
     }
   },
 
-  /*production: {
+  production: {
     client: 'postgresql',
     connection: {
-      database: 'my_db',
-      user:     'username',
-      password: 'password'
+      host: 'localhost',
+      database: 'picker',
+      user:     'picker',
+      password: 'picker'
     },
     pool: {
       min: 2,
@@ -20,6 +21,6 @@ module.exports = {
     migrations: {
       tableName: 'knex_migrations'
     }
-  }*/
+  }
 
 };

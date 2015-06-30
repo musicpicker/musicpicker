@@ -14,16 +14,13 @@ passport.use(new ResourceOwnerPasswordStrategy(
     var sha = require('crypto').createHash('sha256');
     sha.update(password);
 
-    models.User.findOne({
+    new models.User({
       Username: username,
       Password: sha.digest('hex')
-    }, function(err, user) {
-      if (err) {
-        return done(null, clientId, false);
-      }
-      else {
-        return done(null, clientId, user);
-      }
+    }).fetch().then(function(user) {
+      return done(null, clientId, user);
+    }).catch(function(err) {
+      return done(null, clientId, false);
     });
   }
 ));
@@ -34,27 +31,21 @@ server.exchange(oauth2orize.exchange.password(
     var sha = require('crypto').createHash('sha256');
     sha.update(password);
 
-    models.User.findOne({
+    new models.User({
       Username: username,
       Password: sha.digest('hex')
-    }, function(err, user) {
-      if (err) {
-        return done(null, false);
+    }).fetch().then(function(user) {
+      if (user.get('Token') === null) {
+        user.set({Token: uuid.v4()});
+        user.save().then(function(user) {
+          return done(null, user.get('Token'));
+        })
       }
       else {
-        console.log(user);
-        if (user.Token === undefined) {
-          var token = uuid.v4();
-          models.User.findOneAndUpdate({_id: user._id}, {Token: token}, {new: true},
-            function(err, user) {
-              return done(null, user.Token);
-            }
-          );
-        }
-        else {
-          return done(null, user.Token);
-        }
+        return done(null, user.get('Token'));
       }
+    }).catch(function(err) {
+      return done(null, false);
     });
   }
 ));
@@ -71,15 +62,12 @@ router.post('/token',
 
 passport.use(new BearerStrategy(
   function(token, done) {
-    models.User.findOne({
+    new models.User({
       Token: token
-    }, function(err, user) {
-      if (user !== null) {
-        return done(null, user);
-      }
-      else {
-        return done(null, false);
-      }
+    }).fetch().then(function(user) {
+      return done(null, user);
+    }).catch(function(err) {
+      return done(null, false);
     });
   }
 ));

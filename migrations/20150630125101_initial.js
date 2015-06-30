@@ -1,7 +1,7 @@
 exports.up = function(knex, Promise) {
   var users = knex.schema.createTable('users', function(table) {
     table.increments('Id');
-    table.string('Name').unique().notNullable();
+    table.string('Username').unique().notNullable();
     table.string('Password').unique().notNullable();
     table.string('Token');
   })
@@ -36,7 +36,7 @@ exports.up = function(knex, Promise) {
   });
 
   var deviceTracks = knex.schema.createTable('deviceTracks', function(table) {
-    table.primary(['DeviceId', 'TrackId'])
+    table.increments('Id');
     table.integer('DeviceId').references('Id').inTable('devices');
     table.integer('TrackId').references('Id').inTable('tracks');
 

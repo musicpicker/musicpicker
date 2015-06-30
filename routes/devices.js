@@ -16,60 +16,53 @@ router.use(passport.authenticate('bearer', {session: false}));
 
 router.get('/', function(req, res) {
   if (req.query['name'] === undefined) {
-    models.Device.find({
+    new models.Device({
       OwnerId: req.user.id
-    }, function(err, devices) {
+    }).fetchAll().then(function(devices) {
       return res.json(devices);
     });
   }
   else {
-    models.Device.findOne({
+    new models.Device({
       OwnerId: req.user.id,
       Name: req.query['name']
-    }, function(err, device) {
-      if (device === null) {
-        return res.sendStatus(404);
-      }
-      else {
-        return res.json({Id: device._id});
-      }
+    }).fetch().then(function(device) {
+      return res.json({Id: device.id});
+    }).catch(function(err) {
+      return res.sendStatus(404);
     });
   }
 });
 
 router.post('/', function(req, res) {
-  models.Device.create({
+  new models.Device({
     OwnerId: req.user.id,
     Name: req.body['name'],
-    RegistrationDate: Date.now()
-  }, function(err, device) {
-    return res.json({Id: device._id});
+  }).save().then(function(device) {
+    return res.json({Id: device.id});
   });
 });
 
 router.get('/:id', function(req, res) {
-  models.Device.findOne({
-    _id: req.params['id'],
+  new models.Device({
+    id: req.params['id'],
     OwnerId: req.user.id
-  }, function(err, device) {
-    if (device === null) {
-      return res.sendStatus(404);
-    }
+  }).fetch().then(function(device) {
     return res.json(device);
+  }).catch(function(err) {
+    return res.sendStatus(404);
   });
 })
 
 router.delete('/:id', function(req, res) {
-  models.Device.remove({
-    _id: req.params['id'],
+  new models.Device({
+    id: req.params['id'],
     OwnerId: req.user.id
-  }, function(err) {
-    if (err) {
-      return res.sendStatus(400);
-    }
-    else {
-      return res.sendStatus(204);
-    }
+  }).fetch().then(function(device) {
+    device.destroy();
+    return res.sendStatus(204);
+  }).catch(function(err) {
+    return res.sendStatus(404);
   });
 });
 
@@ -80,21 +73,18 @@ function getArtist(submission) {
     }
     redis.get('musicpicker.submissions.' + submission.Artist, function(err, reply) {
       if (reply === null) {
-        models.Artist.findOne({
+        new models.Artist({
           Name: submission.Artist
-        }, function(err, artist) {
-          if (artist === null) {
-            models.Artist.create({
-              Name: submission.Artist
-            }, function(err, artist) {
-              redis.set('musicpicker.submissions.' + submission.Artist, artist._id);
-              resolve(artist._id);
-            })
-          }
-          else {
-            redis.set('musicpicker.submissions.' + submission.Artist, artist._id);
-            resolve(artist._id);
-          }
+        }).fetch().then(function(artist) {
+          redis.set('musicpicker.submissions.' + submission.Artist, artist.id);
+          resolve(artist.id);
+        }).catch(function(err) {
+          new models.Artist({
+            Name: submission.Artist
+          }).save().then(function(artist) {
+            redis.set('musicpicker.submissions.' + submission.Artist, artist.id);
+            resolve(artist.id);
+          });
         });
       }
       else {
@@ -112,24 +102,21 @@ function getAlbum(submission, artistId) {
     redis.get('musicpicker.submissions.' + submission.Artist, function(err, artistId) {
       redis.get('musicpicker.submissions.' + submission.Artist + '.' + submission.Album, function(err, reply) {
         if (reply === null) {
-          models.Album.findOne({
+          new models.Album({
             Name: submission.Album,
             ArtistId: artistId
-          }, function(err, album) {
-            if (album  === null) {
-              models.Album.create({
-                Name: submission.Album,
-                ArtistId: artistId,
-                Year: submission.Year
-              }, function(err, album) {
-                redis.set('musicpicker.submissions.' + submission.Artist + '.' + submission.Album, album._id);
-                resolve(album._id);
-              })
-            }
-            else {
-              redis.set('musicpicker.submissions.' + submission.Artist + '.' + submission.Album, album._id);
-              resolve(album._id);
-            }
+          }).fetch().then(function(album) {
+            redis.set('musicpicker.submissions.' + submission.Artist + '.' + submission.Album, album.id);
+            resolve(album.id);
+          }).catch(function(err) {
+            new models.Album({
+              Name: submission.Album,
+              ArtistId: artistId,
+              Year: submission.Year
+            }).save().then(function(album) {
+              redis.set('musicpicker.submissions.' + submission.Artist + '.' + submission.Album, album.id);
+              resolve(album.id);
+            });
           });
         }
         else {
@@ -145,40 +132,36 @@ function getTrack(submission, device) {
     if (submission.Artist === null || submission.Album === null || submission.Title === null) {
       return resolve();
     }
-
     redis.get('musicpicker.submissions.' + submission.Artist + '.' + submission.Album, function(err, albumId) {
       redis.get('musicpicker.submissions.' + submission.Artist + '.' + submission.Album + '.' + submission.Title, function(err, reply) {
         if (reply === null) {
-          models.Track.findOne({
+          new models.Track({
             Name: submission.Title,
             AlbumId: albumId
-          }, function(err, track) {
-            if (track  === null) {
-              models.Track.create({
-                Name: submission.Title,
-                AlbumId: albumId,
-                Number: submission.Number
-              }, function(err, track) {
-                redis.set('musicpicker.submissions.' + submission.Artist + '.' + submission.Album + '.' + submission.Title, track._id);
-                redis.hset('musicpicker.devicetracks.' + device._id + '.' + track._id, 'trackId', track._id);
-                redis.hset('musicpicker.devicetracks.' + device._id + '.' + track._id, 'deviceTrackId', submission.Id);
-                redis.hset('musicpicker.devicetracks.' + device._id + '.' + track._id, 'duration', submission.Duration);
-                resolve(track._id);
-              })
-            }
-            else {
-              redis.set('musicpicker.submissions.' + submission.Artist + '.' + submission.Album + '.' + submission.Title, track._id);
-              redis.hset('musicpicker.devicetracks.' + device._id + '.' + track._id, 'trackId', track._id);
-              redis.hset('musicpicker.devicetracks.' + device._id + '.' + track._id, 'deviceTrackId', submission.Id);
-              redis.hset('musicpicker.devicetracks.' + device._id + '.' + track._id, 'duration', submission.Duration);
-              resolve(track._id);
-            }
+          }).fetch().then(function(track) {
+            redis.set('musicpicker.submissions.' + submission.Artist + '.' + submission.Album + '.' + submission.Title, track.id);
+            redis.hset('musicpicker.devicetracks.' + device.id + '.' + track.id, 'trackId', track.id);
+            redis.hset('musicpicker.devicetracks.' + device.id + '.' + track.id, 'deviceTrackId', submission.Id);
+            redis.hset('musicpicker.devicetracks.' + device.id + '.' + track.id, 'duration', submission.Duration);
+            resolve(track.id);
+          }).catch(function(err) {
+            new models.Track({
+              Name: submission.Title,
+              AlbumId: albumId,
+              Number: submission.Number
+            }).save().then(function(track) {
+              redis.set('musicpicker.submissions.' + submission.Artist + '.' + submission.Album + '.' + submission.Title, track.id);
+              redis.hset('musicpicker.devicetracks.' + device.id + '.' + track.id, 'trackId', track.id);
+              redis.hset('musicpicker.devicetracks.' + device.id + '.' + track.id, 'deviceTrackId', submission.Id);
+              redis.hset('musicpicker.devicetracks.' + device.id + '.' + track.id, 'duration', submission.Duration);
+              resolve(track.id);
+            });
           });
         }
         else {
-          redis.hset('musicpicker.devicetracks.' + device._id + '.' + reply, 'trackId', reply);
-          redis.hset('musicpicker.devicetracks.' + device._id + '.' + reply, 'deviceTrackId', submission.Id);
-          redis.hset('musicpicker.devicetracks.' + device._id + '.' + reply, 'duration', submission.Duration);
+          redis.hset('musicpicker.devicetracks.' + device.id + '.' + reply, 'trackId', reply);
+          redis.hset('musicpicker.devicetracks.' + device.id + '.' + reply, 'deviceTrackId', submission.Id);
+          redis.hset('musicpicker.devicetracks.' + device.id + '.' + reply, 'duration', submission.Duration);
           resolve(reply);
         }
       });
@@ -188,12 +171,10 @@ function getTrack(submission, device) {
 
 function clearDeviceTracks(deviceId, userId) {
   return new Promise(function(resolve, reject) {
-    models.Device.findOne({
-      _id: deviceId,
-      OwnerId: userId
-    }, function(err, device) {
-      device.Tracks = undefined;
-      device.save();
+    new models.DeviceTrack({
+      DeviceId: deviceId
+    }).fetchAll().then(function(collection) {
+      collection.reset();
       resolve();
     });
   });
@@ -204,12 +185,14 @@ function flushTrackToDevice(device, key) {
     redis.hget(key, 'trackId', function(err, trackId) {
       redis.hget(key, 'deviceTrackId', function(err, deviceTrackId) {
         redis.hget(key, 'duration', function(err, duration) {
-          device.Tracks.push({
+          new models.DeviceTrack({
+            DeviceId: device.id,
             TrackId: trackId,
             DeviceTrackId: deviceTrackId,
-            Duration: duration
+            TrackDuration: duration
+          }).save().then(function() {
+            resolve();
           });
-          resolve();
         });
       });
     });
@@ -218,13 +201,11 @@ function flushTrackToDevice(device, key) {
 
 function flushTracksToDevice(device) {
   return new Promise(function(resolve, reject) {
-    toArray(redis.scan({pattern: 'musicpicker.devicetracks.' + device._id + '.*', count: 100000}), function(err, arr) {
+    toArray(redis.scan({pattern: 'musicpicker.devicetracks.' + device.id + '.*', count: 100000}), function(err, arr) {
       Promise.each(arr, function(item) {
         return flushTrackToDevice(device, item);
       }).then(function() {
-        device.save();
-
-        toArray(redis.scan({pattern: 'musicpicker.devicetracks.' + device._id + '.*', count: 100000}), function(err, arr) {
+        toArray(redis.scan({pattern: 'musicpicker.devicetracks.' + device.id + '.*', count: 100000}), function(err, arr) {
           Promise.each(arr, function(key) {
             return new Promise(function(resolve, reject) {
               redis.del(key, function() {
@@ -249,10 +230,10 @@ function processSubmissions(deviceId, userId, submissions, done) {
       Promise.each(submissions, function(submission) {
         return getAlbum(submission);
       }).then(function() {
-        models.Device.findOne({
-          _id: deviceId,
+        new models.Device({
+          Id: deviceId,
           OwnerId: userId
-        }, function(err, device) {
+        }).fetch().then(function(device) {
           Promise.each(submissions, function(submission) {
             return getTrack(submission, device);
           }).then(function() {
