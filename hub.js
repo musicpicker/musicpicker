@@ -63,13 +63,15 @@ function updateState(deviceId) {
       current: tredis.lpop('musichub.device.' + deviceId + '.queue'),
       currentDeviceTrack: tredis.lpop('musichub.device.' + deviceId + '.queue.device'),
     }).then(function(props) {
-      tredis.set('musichub.device.' + deviceId + '.current', props.current);
-      new models.DeviceTrack({
-        DeviceId: deviceId,
-        TrackId: props.current
-      }).fetch().then(function(dt) {
-        tredis.set('musichub.device.' + deviceId + '.duration', dt.get('TrackDuration'));
-        resolve(props.currentDeviceTrack);
+      tredis.set('musichub.device.' + deviceId + '.current', props.current).then(function() {
+        new models.DeviceTrack({
+          DeviceId: deviceId,
+          TrackId: props.current
+        }).fetch().then(function(dt) {
+          tredis.set('musichub.device.' + deviceId + '.duration', dt.get('TrackDuration')).then(function() {
+            resolve(props.currentDeviceTrack);
+          })
+        });
       });
     })
   });
@@ -93,10 +95,12 @@ function addTrackToQueue(deviceId, trackId) {
 }
 
 function requestNext(io, socket, deviceId) {
-  tredis.set('musichub.device.' + deviceId + '.playing', 0);
-  sendClientState(io, socket, deviceId).then(function() {
-    tredis.get('musichub.device.' + deviceId + '.connection').then(function(deviceClientId) {
-      io.sockets.to(deviceClientId).emit('Stop');
+  tredis.set('musichub.device.' + deviceId + '.playing', 0).then(function() {
+    sendClientState(io, socket, deviceId).then(function() {
+      tredis.get('musichub.device.' + deviceId + '.connection').then(function(deviceClientId) {
+        console.log('STOPP');
+        io.sockets.to(deviceClientId).emit('Stop');
+      });
     });
   });
 }
@@ -107,18 +111,23 @@ function play(io, socket, deviceId) {
       if (parseInt(queueLen) > 0) {
         tredis.set('musichub.device.' + deviceId + '.playing', 1);
         tredis.get('musichub.device.' + deviceId + '.paused').then(function(paused) {
-          io.sockets.to(deviceClientId).emit('Stop');
-          updateState(deviceId).then(function(currentDeviceTrack) {
-            io.sockets.to(deviceClientId).emit('SetTrackId', currentDeviceTrack);
-            io.sockets.to(deviceClientId).emit('Play');
-            sendClientState(io, socket, deviceId);
-          })
+          if (!Boolean(parseInt(paused))) {
+            console.log('SKIP');
+            io.sockets.to(deviceClientId).emit('Stop');
+            updateState(deviceId).then(function(currentDeviceTrack) {
+              io.sockets.to(deviceClientId).emit('SetTrackId', currentDeviceTrack);
+              io.sockets.to(deviceClientId).emit('Play');
+              sendClientState(io, socket, deviceId);
+            });
+          }
+          else {
+            console.log('REPLAY');
+            tredis.set('musichub.device.' + deviceId + '.paused', 0).then(function() {
+              io.sockets.to(deviceClientId).emit('Play');
+              sendClientState(io, socket, deviceId);
+            });
+          }
         });
-      }
-      else {
-        tredis.set('musichub.device.' + deviceId + '.paused', 0);
-        io.sockets.to(deviceClientId).emit('Play');
-        sendClientState(io, socket, deviceId);
       }
     });
   })
@@ -182,9 +191,9 @@ function hub(io, clientId, socket) {
       tredis.set('musichub.device.' + deviceId + '.paused', 1)
     ]).then(function() {
       sendClientState(io, socket, deviceId);
-    });
-    tredis.get('musichub.device.' + deviceId + '.connection').then(function(deviceClientId) {
-      io.sockets.to(deviceClientId).emit('Pause');
+      tredis.get('musichub.device.' + deviceId + '.connection').then(function(deviceClientId) {
+        io.sockets.to(deviceClientId).emit('Pause');
+      });
     });
   })
 
@@ -197,6 +206,7 @@ function hub(io, clientId, socket) {
     tredis.llen('musichub.device.' + deviceId + '.queue').then(function(queueLen) {
       queueLen = parseInt(queueLen);
       if (queueLen !== 0) {
+        console.log('NEXT');
         play(io, socket, deviceId);
       }
     })
