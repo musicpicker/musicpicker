@@ -13,7 +13,6 @@
     "express": "~4.12.2",
     "jade": "~1.9.2",
     "kue": "^0.9.3",
-    "mongoose": "~4.0.6",
     "morgan": "~1.5.1",
     "node-uuid": "~1.4.3",
     "oauth2orize": "~1.0.1",
