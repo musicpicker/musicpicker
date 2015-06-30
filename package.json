@@ -23,6 +23,7 @@
     "redis": "^0.12.1",
     "redis-scanstreams": "^1.0.3",
     "serve-favicon": "~2.2.0",
-    "stream-to-array": "^2.0.2"
+    "stream-to-array": "^2.0.2",
+    "knex": "~0.8.6"
   }
 }
