@@ -153,12 +153,8 @@ var DeviceStateStore = Fluxxor.createStore({
     startDevice: function(payload) {
         this.device = payload.device;
         this.bearer = payload.bearer;
-        $.connection.hub.qs = { 'access_token': this.bearer };
-        $.connection.hub.start().done(function () {
-            musicHubProxy.invoke('RegisterClient', this.device).done(function() {
-                musicHubProxy.invoke('GetState', this.device);
-            }.bind(this));
-        }.bind(this));
+        window.socket.emit('RegisterClient', {DeviceId: this.device});
+        window.socket.emit('GetState', {DeviceId: this.device});
     },
 
     receiveDeviceState: function(payload) {
@@ -173,19 +169,19 @@ var DeviceStateStore = Fluxxor.createStore({
 
     sendQueue: function(payload) {
         console.log(payload);
-        window.musicHubProxy.invoke('Queue', this.device, payload.trackIds);
+        window.socket.emit('Queue', {DeviceId: this.device, TrackIds: payload.trackIds});
     },
 
     sendPause: function() {
-        window.musicHubProxy.server.pause(this.device);
+      window.socket.emit('Pause', {DeviceId: this.device});
     },
 
     sendPlay: function() {
-        window.musicHubProxy.server.play(this.device);
+      window.socket.emit('Play', {DeviceId: this.device});
     },
 
     sendNext: function() {
-        window.musicHubProxy.server.requestNext(this.device);
+      window.socket.emit('RequestNext', {DeviceId: this.device});
     }
 });
 
@@ -232,5 +228,7 @@ var flux = new Fluxxor.Flux({
     AuthStore: new AuthStore()
 }, actions);
 
-var musicHubProxy = $.connection.musicHub;
-musicHubProxy.client.setState = flux.actions.receiveDeviceState;
+var socket = io('http://localhost:3000');
+socket.on('SetState', function(state) {
+  flux.actions.receiveDeviceState(state);
+});
