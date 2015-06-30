@@ -112,7 +112,6 @@ function play(io, socket, deviceId) {
         tredis.set('musichub.device.' + deviceId + '.playing', 1);
         tredis.get('musichub.device.' + deviceId + '.paused').then(function(paused) {
           if (!Boolean(parseInt(paused))) {
-            console.log('SKIP');
             io.sockets.to(deviceClientId).emit('Stop');
             updateState(deviceId).then(function(currentDeviceTrack) {
               io.sockets.to(deviceClientId).emit('SetTrackId', currentDeviceTrack);
@@ -121,7 +120,6 @@ function play(io, socket, deviceId) {
             });
           }
           else {
-            console.log('REPLAY');
             tredis.set('musichub.device.' + deviceId + '.paused', 0).then(function() {
               io.sockets.to(deviceClientId).emit('Play');
               sendClientState(io, socket, deviceId);
@@ -131,6 +129,31 @@ function play(io, socket, deviceId) {
       }
     });
   })
+}
+
+function onDisconnect(clientId) {
+  tredis.get('musichub.devices.' + clientId).then(function(deviceId) {
+    if (deviceId !== null) {
+      Promise.all([
+        tredis.del('musichub.device.' + deviceId + '.current'),
+        tredis.del('musichub.device.' + deviceId + '.duration'),
+        tredis.del('musichub.device.' + deviceId + '.playing'),
+        tredis.del('musichub.device.' + deviceId + '.paused'),
+        tredis.del('musichub.device.' + deviceId + '.queue'),
+        tredis.del('musichub.device.' + deviceId + '.queue.device'),
+        tredis.del('musichub.device.' + deviceId + '.clients'),
+        tredis.del('musichub.device.' + deviceId + '.connection'),
+      ]);
+    }
+    else {
+      tredis.smembers('musichub.client.' + clientId + '.devices').then(function(members) {
+        members.forEach(function(member) {
+          tredis.srem('musichub.client.' + clientId + '.devices', member);
+          tredis.srem('musichub.device.' + member + '.clients', clientId);
+        }.bind(this));
+      });
+    }
+  });
 }
 
 function hub(io, clientId, socket) {
@@ -217,9 +240,8 @@ module.exports = function(io) {
   io.on('connection', function(socket) {
     var clientId = socket.id;
     hub(io, clientId, socket);
-    console.log('hello ' + clientId);
     socket.on('disconnect', function(socket) {
-      console.log('goodbye ' + clientId);
+      onDisconnect(clientId);
     })
   })
 }
