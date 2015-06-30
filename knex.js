@@ -1,1 +1,1 @@
-module.exports = require('knex')(require('./knexfile').production);
+module.exports = require('knex')(require('./knexfile').development);

@@ -20,7 +20,6 @@ function createDeviceState(deviceId) {
       Paused: tredis.get('musichub.device.' + deviceId + '.paused'),
       Queue: tredis.lrange('musichub.device.' + deviceId + '.queue', 0, -1)
     }).then(function(result) {
-      console.log(result);
       resolve({
         Current: parseInt(result.Current),
         Duration: parseInt(result.Duration),
@@ -69,7 +68,7 @@ function updateState(deviceId) {
         DeviceId: deviceId,
         TrackId: props.current
       }).fetch().then(function(dt) {
-        tredis.set('musichub.device.' + deviceId + '.duration', dt.TrackDuration);
+        tredis.set('musichub.device.' + deviceId + '.duration', dt.get('TrackDuration'));
         resolve(props.currentDeviceTrack);
       });
     })
@@ -110,7 +109,7 @@ function play(io, socket, deviceId) {
         tredis.get('musichub.device.' + deviceId + '.paused').then(function(paused) {
           io.sockets.to(deviceClientId).emit('Stop');
           updateState(deviceId).then(function(currentDeviceTrack) {
-            io.sockets.to(deviceClientId).emit('SetTrackId', {TrackId: currentDeviceTrack});
+            io.sockets.to(deviceClientId).emit('SetTrackId', currentDeviceTrack);
             io.sockets.to(deviceClientId).emit('Play');
             sendClientState(io, socket, deviceId);
           })
@@ -127,9 +126,9 @@ function play(io, socket, deviceId) {
 
 function hub(io, clientId, socket) {
   socket.on('RegisterDevice', function(data) {
-    var deviceId = data.DeviceId;
+    var deviceId = data;
     tredis.set('musichub.devices.' + clientId, deviceId);
-    tredis.set('musichub.devices.' + deviceId + '.connection', clientId);
+    tredis.set('musichub.device.' + deviceId + '.connection', clientId);
   });
 
   socket.on('RegisterClient', function(data) {
@@ -184,7 +183,6 @@ function hub(io, clientId, socket) {
       sendClientState(io, socket, deviceId);
     });
     tredis.get('musichub.device.' + deviceId + '.connection').then(function(deviceClientId) {
-      console.log('PAAAAUSE');
       io.sockets.to(deviceClientId).emit('Pause');
     });
   })
@@ -194,7 +192,7 @@ function hub(io, clientId, socket) {
   });
 
   socket.on('Next', function(data) {
-    var deviceId = data.deviceId;
+    var deviceId = data;
     tredis.llen('musichub.device.' + deviceId + '.queue').then(function(queueLen) {
       queueLen = parseInt(queueLen);
       if (queueLen !== 0) {

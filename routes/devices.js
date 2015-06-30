@@ -3,6 +3,7 @@ var router = express.Router();
 
 var passport = require('passport');
 var models = require('../models');
+var knex = require('../knex');
 
 var Promise = require('bluebird');
 var kue = require('kue');
@@ -171,12 +172,9 @@ function getTrack(submission, device) {
 
 function clearDeviceTracks(deviceId, userId) {
   return new Promise(function(resolve, reject) {
-    new models.DeviceTrack({
-      DeviceId: deviceId
-    }).fetchAll().then(function(collection) {
-      collection.reset();
+    knex('deviceTracks').where('DeviceId', deviceId).delete().then(function() {
       resolve();
-    });
+    })
   });
 }
 
