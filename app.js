@@ -10,6 +10,7 @@ var passport = require('passport');
 var auth = require('./routes/oauth');
 var account = require('./routes/account');
 var devices = require('./routes/devices');
+var metadata = require('./routes/metadata');
 var routes = require('./routes/index');
 
 var app = express();
@@ -32,6 +33,7 @@ app.use('/', routes);
 app.use('/oauth', auth);
 app.use('/api/account', account);
 app.use('/api/devices', devices);
+app.use('/api', metadata);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
