@@ -230,8 +230,8 @@ function submissionProgress(job, len) {
   var buf = 0;
   return function(callback) {
     buf++;
-    if (buf === 50) {
-      i += 50;
+    if (buf === 5) {
+      i += 5;
       job.progress(i, len);
       buf = 0;
     }
