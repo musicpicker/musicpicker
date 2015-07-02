@@ -157,17 +157,28 @@ function onDisconnect(clientId) {
 }
 
 function hub(io, clientId, socket) {
-  socket.on('RegisterDevice', function(data) {
-    var deviceId = data;
-    tredis.set('musichub.devices.' + clientId, deviceId);
-    tredis.set('musichub.device.' + deviceId + '.connection', clientId);
+  socket.on('RegisterDevice', function(deviceId) {
+    new models.Device({
+      Id: deviceId
+    }).fetch().then(function(device) {
+      if (device.get('OwnerId') === socket.client.user.id) {
+        tredis.set('musichub.devices.' + clientId, deviceId);
+        tredis.set('musichub.device.' + deviceId + '.connection', clientId);
+      }
+    });
   });
 
   socket.on('RegisterClient', function(data) {
     var deviceId = data.DeviceId;
-    tredis.sadd('musichub.client.' + clientId + '.devices', deviceId);
-    tredis.sadd('musichub.device.' + deviceId + '.clients', clientId);
-    socket.join('device.' + deviceId);
+    new models.Device({
+      Id: deviceId
+    }).fetch().then(function(device) {
+      if (device.get('OwnerId') === socket.client.user.id) {
+        tredis.sadd('musichub.client.' + clientId + '.devices', deviceId);
+        tredis.sadd('musichub.device.' + deviceId + '.clients', clientId);
+        socket.join('device.' + deviceId);
+      }
+    });
   });
 
   socket.on('Queue', function(data) {
@@ -235,8 +246,7 @@ function hub(io, clientId, socket) {
   });
 }
 
-function authenticate(data, callback) {
-  var token = data.bearer;
+function authenticate(token, callback) {
   new models.User({
     Token: token
   }).fetch().then(function(user) {
@@ -246,8 +256,7 @@ function authenticate(data, callback) {
   });
 }
 
-function postAuthenticate(socket, data) {
-  var token = data.bearer;
+function postAuthenticate(socket, token) {
   new models.User({
     Token: token
   }).fetch().then(function(user) {

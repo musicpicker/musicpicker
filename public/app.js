@@ -156,7 +156,7 @@ var DeviceStateStore = Fluxxor.createStore({
 
         window.socket = io('http://localhost:3000');
         socket.on('connect', function() {
-          socket.emit('authentication', {bearer: this.bearer});
+          socket.emit('authentication', this.bearer);
           socket.on('authenticated', function() {
             socket.on('SetState', function(state) {
               flux.actions.receiveDeviceState(state);
