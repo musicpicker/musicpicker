@@ -23,7 +23,7 @@ var Device = React.createClass({
       return (
         <div className="progress">
           <div className="progress-bar progress-bar-success" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style={{width: 100 + '%'}}>
-            <span class="sr-only">Library ready</span>
+            <span className="sr-only">Library ready</span>
           </div>
         </div>
       );
