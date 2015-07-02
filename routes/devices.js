@@ -85,6 +85,8 @@ function getArtist(submission) {
           }).save().then(function(artist) {
             redis.set('musicpicker.submissions.' + submission.Artist, artist.id);
             resolve(artist.id);
+          }).catch(function(err) {
+            resolve();
           });
         });
       }
@@ -117,6 +119,8 @@ function getAlbum(submission, artistId) {
             }).save().then(function(album) {
               redis.set('musicpicker.submissions.' + submission.Artist + '.' + submission.Album, album.id);
               resolve(album.id);
+            }).catch(function(err) {
+              resolve();
             });
           });
         }
@@ -156,7 +160,9 @@ function getTrack(submission, device) {
               redis.hset('musicpicker.devicetracks.' + device.id + '.' + track.id, 'deviceTrackId', submission.Id);
               redis.hset('musicpicker.devicetracks.' + device.id + '.' + track.id, 'duration', submission.Duration);
               resolve(track.id);
-            });
+            }).catch(function(err) {
+              resolve();
+            })
           });
         }
         else {
@@ -260,7 +266,7 @@ router.post('/:id/submit', function(req, res) {
   });
 });
 
-queue.process('submissions', function(job, done) {
+queue.process('submissions', 5, function(job, done) {
   processSubmissions(job.data.deviceId, job.data.userId, job.data.submissions, done);
 });
 
