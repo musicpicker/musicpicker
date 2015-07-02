@@ -153,8 +153,19 @@ var DeviceStateStore = Fluxxor.createStore({
     startDevice: function(payload) {
         this.device = payload.device;
         this.bearer = payload.bearer;
-        window.socket.emit('RegisterClient', {DeviceId: this.device});
-        window.socket.emit('GetState', {DeviceId: this.device});
+
+        window.socket = io('http://localhost:3000');
+        socket.on('connect', function() {
+          socket.emit('authentication', {bearer: this.bearer});
+          socket.on('authenticated', function() {
+            socket.on('SetState', function(state) {
+              flux.actions.receiveDeviceState(state);
+            });
+
+            window.socket.emit('RegisterClient', {DeviceId: this.device});
+            window.socket.emit('GetState', {DeviceId: this.device});
+          }.bind(this));
+        }.bind(this));
     },
 
     receiveDeviceState: function(payload) {
@@ -227,8 +238,3 @@ var flux = new Fluxxor.Flux({
     DeviceStateStore: new DeviceStateStore(),
     AuthStore: new AuthStore()
 }, actions);
-
-var socket = io('http://localhost:3000');
-socket.on('SetState', function(state) {
-  flux.actions.receiveDeviceState(state);
-});

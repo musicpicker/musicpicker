@@ -1,5 +1,6 @@
 var redis = require('redis-scanstreams')(require('redis')).createClient();
 var tredis = require('then-redis').createClient();
+var auth = require('socketio-auth');
 var Promise = require('bluebird');
 var models = require('./models');
 
@@ -98,7 +99,6 @@ function requestNext(io, socket, deviceId) {
   tredis.set('musichub.device.' + deviceId + '.playing', 0).then(function() {
     sendClientState(io, socket, deviceId).then(function() {
       tredis.get('musichub.device.' + deviceId + '.connection').then(function(deviceClientId) {
-        console.log('STOPP');
         io.sockets.to(deviceClientId).emit('Stop');
       });
     });
@@ -229,14 +229,40 @@ function hub(io, clientId, socket) {
     tredis.llen('musichub.device.' + deviceId + '.queue').then(function(queueLen) {
       queueLen = parseInt(queueLen);
       if (queueLen !== 0) {
-        console.log('NEXT');
         play(io, socket, deviceId);
       }
     })
   });
 }
 
+function authenticate(data, callback) {
+  var token = data.bearer;
+  new models.User({
+    Token: token
+  }).fetch().then(function(user) {
+    return callback(null, true);
+  }).catch(function(err) {
+    return callback(new Error('Invalid authentication token'));
+  });
+}
+
+function postAuthenticate(socket, data) {
+  var token = data.bearer;
+  new models.User({
+    Token: token
+  }).fetch().then(function(user) {
+    socket.client.user = user;
+  }).catch(function(err) {
+    return callback(new Error('Invalid authentication token'));
+  });
+}
+
 module.exports = function(io) {
+  auth(io, {
+    authenticate: authenticate,
+    postAuthenticate: postAuthenticate
+  });
+
   io.on('connection', function(socket) {
     var clientId = socket.id;
     hub(io, clientId, socket);
