@@ -41,9 +41,24 @@ function isRegistered(clientId, deviceId) {
         resolve(true);
       }
       else {
-        tredis.sismember('musichub.device.' + deviceId + '.clients').then(function(reply) {
+        tredis.sismember('musichub.device.' + deviceId + '.clients', clientId).then(function(reply) {
           resolve(Boolean(parseInt(reply)));
         });
+      }
+    });
+  });
+}
+
+function checkRegistration(clientId, deviceId) {
+  return new Promise(function(resolve, reject) {
+    console.log('CHECK');
+    isRegistered(clientId, deviceId).then(function(registered) {
+      console.log('REGISTERED');
+      if (registered) {
+        tredis.exists('musichub.device.' + deviceId + '.connection').then(function(exists) {
+          console.log('RESOLVED');
+          resolve();
+        })
       }
     });
   });
@@ -185,64 +200,75 @@ function hub(io, clientId, socket) {
     var deviceId = data.DeviceId;
     var trackIds = data.TrackIds;
 
-    Promise.all([
-      tredis.del('musichub.device.' + deviceId + '.queue'),
-      tredis.del('musichub.device.' + deviceId + '.queue.device')
-    ]).then(function() {
-      Promise.each(trackIds, function(trackId) {
-        return addTrackToQueue(deviceId, trackId);
-      }).then(function() {
-        sendClientState(io, socket, deviceId).then(function() {
-          tredis.get('musichub.device.' + deviceId + '.playing').then(function(playing) {
-            if (Boolean(parseInt(playing))) {
-              requestNext(io, socket, deviceId);
-            }
-            else {
-              tredis.set('musichub.device.' + deviceId + '.playing', 0).then(function() {
-                play(io, socket, deviceId);
-              });
-            }
-          });
-        })
+    checkRegistration(socket.id, deviceId).then(function() {
+      Promise.all([
+        tredis.del('musichub.device.' + deviceId + '.queue'),
+        tredis.del('musichub.device.' + deviceId + '.queue.device')
+      ]).then(function() {
+        Promise.each(trackIds, function(trackId) {
+          return addTrackToQueue(deviceId, trackId);
+        }).then(function() {
+          sendClientState(io, socket, deviceId).then(function() {
+            tredis.get('musichub.device.' + deviceId + '.playing').then(function(playing) {
+              if (Boolean(parseInt(playing))) {
+                requestNext(io, socket, deviceId);
+              }
+              else {
+                tredis.set('musichub.device.' + deviceId + '.playing', 0).then(function() {
+                  play(io, socket, deviceId);
+                });
+              }
+            });
+          })
+        });
       });
     });
   });
 
   socket.on('GetState', function(data) {
-    createDeviceState(data.DeviceId).then(function(state) {
-      socket.emit('SetState', state);
-    })
+    checkRegistration(socket.id, data.DeviceId).then(function() {
+      createDeviceState(data.DeviceId).then(function(state) {
+        socket.emit('SetState', state);
+      })
+    });
   });
 
   socket.on('Play', function(data) {
-    play(io, socket, data.DeviceId);
+    checkRegistration(socket.id, data.DeviceId).then(function() {
+      play(io, socket, data.DeviceId);
+    });
   });
 
   socket.on('Pause', function(data) {
-    var deviceId = data.DeviceId;
-    Promise.all([
-      tredis.set('musichub.device.' + deviceId + '.playing', 0),
-      tredis.set('musichub.device.' + deviceId + '.paused', 1)
-    ]).then(function() {
-      sendClientState(io, socket, deviceId);
-      tredis.get('musichub.device.' + deviceId + '.connection').then(function(deviceClientId) {
-        io.sockets.to(deviceClientId).emit('Pause');
+    checkRegistration(socket.id, data.DeviceId).then(function() {
+      var deviceId = data.DeviceId;
+      Promise.all([
+        tredis.set('musichub.device.' + deviceId + '.playing', 0),
+        tredis.set('musichub.device.' + deviceId + '.paused', 1)
+      ]).then(function() {
+        sendClientState(io, socket, deviceId);
+        tredis.get('musichub.device.' + deviceId + '.connection').then(function(deviceClientId) {
+          io.sockets.to(deviceClientId).emit('Pause');
+        });
       });
     });
   })
 
   socket.on('RequestNext', function(data) {
-    requestNext(io, socket, data.DeviceId);
+    checkRegistration(socket.id, data.DeviceId).then(function() {
+      requestNext(io, socket, data.DeviceId);
+    });
   });
 
-  socket.on('Next', function(data) {
-    var deviceId = data;
-    tredis.llen('musichub.device.' + deviceId + '.queue').then(function(queueLen) {
-      queueLen = parseInt(queueLen);
-      if (queueLen !== 0) {
-        play(io, socket, deviceId);
-      }
-    })
+  socket.on('Next', function(deviceId) {
+    checkRegistration(socket.id, deviceId).then(function() {
+      tredis.llen('musichub.device.' + deviceId + '.queue').then(function(queueLen) {
+        queueLen = parseInt(queueLen);
+        if (queueLen !== 0) {
+          play(io, socket, deviceId);
+        }
+      })
+    });
   });
 }
 
