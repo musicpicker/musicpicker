@@ -52,6 +52,10 @@ var actions = {
 
     signIn: function(username, password) {
         this.dispatch('AUTH_SIGNIN', {username: username, password: password});
+    },
+
+    receiveSubmissionState: function(state) {
+      this.dispatch('DEVICE_SUBMISSION', state);
     }
 };
 
@@ -141,8 +145,12 @@ var DeviceStateStore = Fluxxor.createStore({
     lastPause: null,
     queue: [],
 
+    submission_processing: false,
+    submission_progress: 0,
+
     actions: {
         'DEVICE_STATE': 'receiveDeviceState',
+        'DEVICE_SUBMISSION': 'receiveDeviceSubmission',
         'DEVICE_START': 'startDevice',
         'SEND_QUEUE': 'sendQueue',
         'PLAYER_PAUSE': 'sendPause',
@@ -164,6 +172,10 @@ var DeviceStateStore = Fluxxor.createStore({
 
             window.socket.emit('RegisterClient', {DeviceId: this.device});
             window.socket.emit('GetState', {DeviceId: this.device});
+
+            socket.on('Submission', function(state) {
+              flux.actions.receiveSubmissionState(state);
+            });
           }.bind(this));
         }.bind(this));
     },
@@ -176,6 +188,13 @@ var DeviceStateStore = Fluxxor.createStore({
         this.queue = payload.deviceState.Queue;
         console.log(payload);
         this.emit('change');
+    },
+
+    receiveDeviceSubmission: function(state) {
+      console.log('Process: ' + state.processing + ' - Progress: ' + state.progress);
+      this.submission_processing = state.processing;
+      this.submission_progress = state.progress;
+      this.emit('change');
     },
 
     sendQueue: function(payload) {

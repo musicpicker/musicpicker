@@ -51,6 +51,10 @@ var Main = React.createClass({
     render: function() {
         if (this.state.bearer !== null && this.state.device !== null) {
             return (
+              <div>
+                <div className="row">
+                  <Device />
+                </div>
                 <div className="row">
                     <div className="col-md-8">
                         <CollectionBrowser />
@@ -59,6 +63,7 @@ var Main = React.createClass({
                         <Player />
                     </div>
                 </div>
+              </div>
             );
         }
         else {

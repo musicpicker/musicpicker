@@ -14,7 +14,7 @@ var TrackInfo = React.createClass({
     },
 
     componentWillReceiveProps: function(props) {
-        if (props.id === 0) {
+        if (props.id === 0 || props.id === null) {
             return;
         }
 

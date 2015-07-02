@@ -11,7 +11,7 @@ var kue = require('kue');
 var redis = require('redis-scanstreams')(require('redis')).createClient();
 var toArray = require('stream-to-array')
 
-queue = kue.createQueue();
+var queue = require('../queue');
 
 router.use(passport.authenticate('bearer', {session: false}));
 
@@ -225,49 +225,77 @@ function flushTracksToDevice(device) {
   });
 };
 
-function processSubmissions(deviceId, userId, submissions, done) {
+function submissionProgress(job, len) {
+  var i = 0;
+  var buf = 0;
+  return function(callback) {
+    buf++;
+    if (buf === 50) {
+      i += 50;
+      job.progress(i, len);
+      buf = 0;
+    }
+    return callback();
+  }
+}
+
+function processSubmissions(job, deviceId, userId, submissions, done) {
   var begin = Date.now();
+  var progress = submissionProgress(job, 4 * submissions.length);
+
   clearDeviceTracks(deviceId, userId).then(function() {
     Promise.each(submissions, function(submission) {
-      return getArtist(submission);
-    }).then(function() {
+      return progress(getArtist.bind(this, submission));
+    }.bind(this)).then(function() {
       Promise.each(submissions, function(submission) {
-        return getAlbum(submission);
-      }).then(function() {
+        return progress(getAlbum.bind(this, submission));
+      }.bind(this)).then(function() {
         new models.Device({
           Id: deviceId,
           OwnerId: userId
         }).fetch().then(function(device) {
           Promise.each(submissions, function(submission) {
-            return getTrack(submission, device);
-          }).then(function() {
-            flushTracksToDevice(device).then(function() {
+            return progress(getTrack.bind(this, submission, device));
+          }.bind(this)).then(function() {
+            progress(flushTracksToDevice.bind(this, device)).then(function() {
+              redis.del('musicpicker.submissionjob.' + deviceId);
               done();
             });
-          });
-        });
-      });
-    });
-  });
+          }.bind(this));
+        }.bind(this));
+      }.bind(this));
+    }.bind(this));
+  }.bind(this));
 }
 
 router.post('/:id/submit', function(req, res) {
-  queue.create('submissions', {
+  var job = queue.create('submissions', {
     deviceId: req.params['id'],
     userId: req.user.id,
     submissions: req.body
-  }).save(function(err) {
+  });
+
+  job.on('progress', function(progress, data) {
+    redis.publish('submissions.' + req.params['id'] + '.progress', progress);
+  });
+  job.on('complete', function() {
+    redis.publish('submissions.' + req.params['id'] + '.processing', 0);
+  });
+
+  job.save(function(err) {
     if (err) {
       return res.sendStatus(500);
     }
     else {
+      redis.publish('submissions.' + req.params['id'] + '.processing', 1);
       return res.sendStatus(200);
     }
   });
 });
 
 queue.process('submissions', 5, function(job, done) {
-  processSubmissions(job.data.deviceId, job.data.userId, job.data.submissions, done);
+  redis.set('musicpicker.submissionjob.' + job.data.deviceId, job.id);
+  processSubmissions(job, job.data.deviceId, job.data.userId, job.data.submissions, done);
 });
 
 module.exports = router;

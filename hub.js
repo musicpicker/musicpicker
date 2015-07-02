@@ -1,5 +1,8 @@
 var redis = require('redis-scanstreams')(require('redis')).createClient();
 var tredis = require('then-redis').createClient();
+var redisChan = require('redis').createClient();
+var kue = require('kue');
+var queue = require('./queue');
 var auth = require('socketio-auth');
 var Promise = require('bluebird');
 var models = require('./models');
@@ -49,10 +52,13 @@ function isRegistered(clientId, deviceId) {
   });
 }
 
-function checkRegistration(clientId, deviceId) {
+function checkRegistration(clientId, deviceId, skipDevice) {
   return new Promise(function(resolve, reject) {
     isRegistered(clientId, deviceId).then(function(registered) {
-      if (registered) {
+      if (skipDevice === true) {
+        return resolve();
+      }
+      if (Boolean(parseInt(registered))) {
         tredis.exists('musichub.device.' + deviceId + '.connection').then(function(exists) {
           resolve();
         })
@@ -168,6 +174,25 @@ function onDisconnect(clientId) {
   });
 }
 
+function reportSubmissionStatus(socket, deviceId) {
+  redisChan.on('message', function(channel, message) {
+    if (channel === 'submissions.' + deviceId + '.progress') {
+      socket.emit('Submission', {
+        processing: true,
+        progress: parseInt(message)
+      });
+    }
+
+    if (channel === 'submissions.' + deviceId + '.processing') {
+      socket.emit('Submission', {
+        processing: Boolean(parseInt(message))
+      });
+    }
+  });
+  redisChan.subscribe('submissions.' + deviceId + '.processing');
+  redisChan.subscribe('submissions.' + deviceId + '.progress');
+}
+
 function hub(io, clientId, socket) {
   socket.on('RegisterDevice', function(deviceId) {
     new models.Device({
@@ -189,6 +214,7 @@ function hub(io, clientId, socket) {
         tredis.sadd('musichub.client.' + clientId + '.devices', deviceId);
         tredis.sadd('musichub.device.' + deviceId + '.clients', clientId);
         socket.join('device.' + deviceId);
+        reportSubmissionStatus(socket, deviceId);
       }
     });
   });
