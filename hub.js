@@ -51,12 +51,9 @@ function isRegistered(clientId, deviceId) {
 
 function checkRegistration(clientId, deviceId) {
   return new Promise(function(resolve, reject) {
-    console.log('CHECK');
     isRegistered(clientId, deviceId).then(function(registered) {
-      console.log('REGISTERED');
       if (registered) {
         tredis.exists('musichub.device.' + deviceId + '.connection').then(function(exists) {
-          console.log('RESOLVED');
           resolve();
         })
       }
