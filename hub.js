@@ -127,27 +127,25 @@ function requestNext(io, socket, deviceId) {
   });
 }
 
-function play(io, socket, deviceId) {
+function play(io, socket, deviceId, fromNext) {
   tredis.get('musichub.device.' + deviceId + '.connection').then(function(deviceClientId) {
     tredis.llen('musichub.device.' + deviceId + '.queue').then(function(queueLen) {
       if (parseInt(queueLen) > 0) {
         tredis.set('musichub.device.' + deviceId + '.playing', 1);
-        tredis.get('musichub.device.' + deviceId + '.paused').then(function(paused) {
-          if (!Boolean(parseInt(paused))) {
-            io.sockets.to(deviceClientId).emit('Stop');
-            updateState(deviceId).then(function(currentDeviceTrack) {
-              io.sockets.to(deviceClientId).emit('SetTrackId', currentDeviceTrack);
-              io.sockets.to(deviceClientId).emit('Play');
-              sendClientState(io, socket, deviceId);
-            });
-          }
-          else {
-            tredis.set('musichub.device.' + deviceId + '.paused', 0).then(function() {
-              io.sockets.to(deviceClientId).emit('Play');
-              sendClientState(io, socket, deviceId);
-            });
-          }
-        });
+        if (fromNext) {
+          io.sockets.to(deviceClientId).emit('Stop');
+          updateState(deviceId).then(function(currentDeviceTrack) {
+            io.sockets.to(deviceClientId).emit('SetTrackId', currentDeviceTrack);
+            io.sockets.to(deviceClientId).emit('Play');
+            sendClientState(io, socket, deviceId);
+          });
+        }
+        else {
+          tredis.set('musichub.device.' + deviceId + '.paused', 0).then(function() {
+            io.sockets.to(deviceClientId).emit('Play');
+            sendClientState(io, socket, deviceId);
+          });
+        }
       }
     });
   })
@@ -297,7 +295,7 @@ function hub(io, clientId, socket) {
       tredis.llen('musichub.device.' + deviceId + '.queue').then(function(queueLen) {
         queueLen = parseInt(queueLen);
         if (queueLen !== 0) {
-          play(io, socket, deviceId);
+          play(io, socket, deviceId, true);
         }
       })
     });
