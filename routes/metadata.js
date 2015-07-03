@@ -5,7 +5,9 @@ var knex = require('../knex');
 
 router.get('/tracks', function(req, res) {
   var deviceId = req.query['device'];
-  var request = knex.select('tracks.*').from('tracks').innerJoin('deviceTracks', 'tracks.Id', 'deviceTracks.TrackId').where('deviceTracks.DeviceId', req.query['device']);
+  var request = knex.select('tracks.*').from('tracks').
+      innerJoin('deviceTracks', 'tracks.Id', 'deviceTracks.TrackId').
+      where('deviceTracks.DeviceId', req.query['device']).orderBy('tracks.Number');
   if (req.query['album'] === undefined) {
     request.then(function(result) {
       res.json(result);
@@ -33,7 +35,8 @@ router.get('/tracks/:id', function(req, res) {
 router.get('/albums', function(req, res) {
   var deviceId = req.query['device'];
   var request = knex.select('albums.*').from('tracks').innerJoin('deviceTracks', 'tracks.Id', 'deviceTracks.TrackId').
-    where('deviceTracks.DeviceId', req.query['device']).innerJoin('albums', 'tracks.AlbumId', 'albums.Id').distinct('albums.Id');
+    where('deviceTracks.DeviceId', req.query['device']).innerJoin('albums', 'tracks.AlbumId', 'albums.Id').
+    distinct('albums.Id').orderBy('albums.Name');
 
   if (req.query['artist'] === undefined) {
     request.then(function(result) {
@@ -63,7 +66,7 @@ router.get('/artists', function(req, res) {
   var deviceId = req.query['device'];
   var request = knex.select('artists.*').from('tracks').innerJoin('deviceTracks', 'tracks.Id', 'deviceTracks.TrackId').
     where('deviceTracks.DeviceId', req.query['device']).innerJoin('albums', 'tracks.AlbumId', 'albums.Id').
-    innerJoin('artists', 'albums.ArtistId', 'artists.Id').distinct('artists.Id');
+    innerJoin('artists', 'albums.ArtistId', 'artists.Id').distinct('artists.Id').orderBy('artists.Name');
 
     request.then(function(result) {
       res.json(result);
