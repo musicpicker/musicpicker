@@ -245,7 +245,7 @@ function hub(io, clientId, socket) {
               }
               else {
                 tredis.set('musichub.device.' + deviceId + '.playing', 0).then(function() {
-                  play(io, socket, deviceId);
+                  play(io, socket, deviceId, true);
                 });
               }
             });
