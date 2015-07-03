@@ -208,11 +208,11 @@ function flushTrackToDevice(device, key) {
   });
 }
 
-function flushTracksToDevice(device) {
+function flushTracksToDevice(device, progress) {
   return new Promise(function(resolve, reject) {
     toArray(redis.scan({pattern: 'musicpicker.devicetracks.' + device.id + '.*', count: 100000}), function(err, arr) {
       Promise.each(arr, function(item) {
-        return flushTrackToDevice(device, item);
+        return progress(flushTrackToDevice.bind(this, device, item));
       }).then(function() {
         toArray(redis.scan({pattern: 'musicpicker.devicetracks.' + device.id + '.*', count: 100000}), function(err, arr) {
           Promise.each(arr, function(key) {
@@ -268,7 +268,9 @@ function submissionProgress(job, len) {
       job.progress(i, len);
       buf = 0;
     }
-    return callback();
+    if (callback !== undefined) {
+      return callback();
+    }
   }
 }
 
@@ -290,7 +292,7 @@ function processSubmissions(job, deviceId, userId, submissions, done) {
           Promise.each(submissions, function(submission) {
             return progress(getTrack.bind(this, submission, device));
           }.bind(this)).then(function() {
-            progress(flushTracksToDevice.bind(this, device)).then(function() {
+            flushTracksToDevice(device, progress).then(function() {
               redis.del('musicpicker.submissionjob.' + deviceId);
               done();
             });
