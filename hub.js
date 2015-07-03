@@ -163,7 +163,6 @@ function onDisconnect(io, socket, clientId) {
         tredis.del('musichub.device.' + deviceId + '.paused'),
         tredis.del('musichub.device.' + deviceId + '.queue'),
         tredis.del('musichub.device.' + deviceId + '.queue.device'),
-        tredis.del('musichub.device.' + deviceId + '.clients'),
         tredis.del('musichub.device.' + deviceId + '.connection'),
       ]);
       sendClientState(io, socket, deviceId);
