@@ -23,6 +23,7 @@
     "passport-oauth2-resource-owner-password": "~1.0.0",
     "redis": "^0.12.1",
     "redis-scanstreams": "^1.0.3",
+    "request": "^2.58.0",
     "serve-favicon": "~2.2.0",
     "socket.io": "~1.3.5",
     "socketio-auth": "0.0.3",

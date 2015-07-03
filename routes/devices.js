@@ -7,6 +7,7 @@ var knex = require('../knex');
 
 var Promise = require('bluebird');
 var kue = require('kue');
+var request = require('request');
 
 var redis = require('redis-scanstreams')(require('redis')).createClient();
 var toArray = require('stream-to-array')
@@ -118,6 +119,10 @@ function getAlbum(submission, artistId) {
               Year: submission.Year
             }).save().then(function(album) {
               redis.set('musicpicker.submissions.' + submission.Artist + '.' + submission.Album, album.id);
+              queue.create('artworks', {
+                submission: submission,
+                albumId: album.id
+              }).save();
               resolve(album.id);
             }).catch(function(err) {
               resolve();
@@ -225,6 +230,34 @@ function flushTracksToDevice(device) {
   });
 };
 
+function getArtwork(submission, albumId, done) {
+  var key = '2c2e6ce34b0d78dac557611b898bf547';
+  var url = 'http://ws.audioscrobbler.com/2.0/?method=album.getinfo&api_key=' +
+      key + '&artist=' + submission.Artist + '&album=' + submission.Album + '&format=json';
+
+  request(url, function(error, response, body) {
+    if (!error && response.statusCode == 200) {
+      var result = JSON.parse(body);
+      if (result.album !== undefined && result.album.image !== undefined) {
+        var images = result.album.image;
+        if (images.length > 0) {
+          var image = images[images.length - 1]['#text'];
+          new models.Album({
+            Id: albumId
+          }).fetch().then(function(album) {
+            album.set('Artwork', image);
+            album.save();
+            done();
+          }).catch(function() {
+            done();
+          });
+        }
+      }
+      done();
+    }
+  });
+}
+
 function submissionProgress(job, len) {
   var i = 0;
   var buf = 0;
@@ -296,6 +329,10 @@ router.post('/:id/submit', function(req, res) {
 queue.process('submissions', 5, function(job, done) {
   redis.set('musicpicker.submissionjob.' + job.data.deviceId, job.id);
   processSubmissions(job, job.data.deviceId, job.data.userId, job.data.submissions, done);
+});
+
+queue.process('artworks', 3, function(job, done) {
+  getArtwork(job.data.submission, job.data.albumId, done);
 });
 
 module.exports = router;
