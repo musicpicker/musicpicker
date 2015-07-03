@@ -1,5 +1,4 @@
 var gulp = require('gulp');
-var merge = require('merge-stream');
 var concat = require('gulp-concat');
 var bower = require('gulp-bower');
 var react = require('gulp-react');
