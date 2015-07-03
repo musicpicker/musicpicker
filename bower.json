@@ -1,0 +1,29 @@
+{
+  "name": "musicpicker",
+  "version": "0.0.0",
+  "homepage": "https://github.com/hugoatease/musicpicker",
+  "authors": [
+    "Hugo Caille"
+  ],
+  "license": "Apache-2.0",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "~3.3.5",
+    "react": "~0.13.3",
+    "fluxxor": "~1.6.0"
+  },
+  "overrides": {
+    "bootstrap": {
+      "main": [
+        "dist/js/bootstrap.js",
+        "dist/css/bootstrap.css"
+      ]
+    }
+  }
+}

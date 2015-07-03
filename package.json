@@ -2,6 +2,11 @@
   "name": "musicpicker",
   "version": "0.0.0",
   "private": true,
+  "homepage": "https://github.com/hugoatease/musicpicker",
+  "license": "Apache-2.0",
+  "author": {
+    "name": "Hugo Caille"
+  },
   "scripts": {
     "start": "node ./bin/www"
   },

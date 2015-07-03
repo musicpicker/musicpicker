@@ -164,7 +164,7 @@ var DeviceStateStore = Fluxxor.createStore({
         this.device = payload.device;
         this.bearer = payload.bearer;
 
-        window.socket = io('http://localhost:3000');
+        window.socket = io(window.location.origin);
         socket.on('connect', function() {
           socket.emit('authentication', this.bearer);
           socket.on('authenticated', function() {
