@@ -1,4 +1,4 @@
-var Device = React.createClass({
+var Submission = React.createClass({
   mixins: [FluxMixin, StoreWatchMixin('DeviceStateStore')],
 
   getStateFromFlux: function() {
@@ -14,7 +14,7 @@ var Device = React.createClass({
       return (
       <div className="progress">
         <div className="progress-bar progress-bar-info" role="progressbar" aria-valuenow={this.state.submission_progress} aria-valuemin="0" aria-valuemax="100" style={{width: this.state.submission_progress + '%'}}>
-          <span class="sr-only">Library import: {this.state.submission_progress}%</span>
+          <span>Library import: {this.state.submission_progress}%</span>
         </div>
       </div>
       );
@@ -23,7 +23,7 @@ var Device = React.createClass({
       return (
         <div className="progress">
           <div className="progress-bar progress-bar-success" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style={{width: 100 + '%'}}>
-            <span className="sr-only">Library ready</span>
+            <span>Library ready</span>
           </div>
         </div>
       );

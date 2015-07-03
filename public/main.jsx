@@ -53,13 +53,14 @@ var Main = React.createClass({
             return (
               <div>
                 <div className="row">
-                  <Device />
+                  <Submission />
                 </div>
                 <div className="row">
                     <div className="col-md-8">
                         <CollectionBrowser />
                     </div>
                     <div className="col-md-4">
+                        <Connection />
                         <Player />
                     </div>
                 </div>

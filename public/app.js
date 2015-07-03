@@ -139,6 +139,8 @@ var CollectionStore = Fluxxor.createStore({
 var DeviceStateStore = Fluxxor.createStore({
     device: null,
     bearer: null,
+
+    connected: false,
     playing: false,
     current: null,
     duration: 0,
@@ -171,7 +173,9 @@ var DeviceStateStore = Fluxxor.createStore({
             });
 
             window.socket.emit('RegisterClient', {DeviceId: this.device});
-            window.socket.emit('GetState', {DeviceId: this.device});
+            socket.on('ClientRegistered', function() {
+              window.socket.emit('GetState', this.device);
+            }.bind(this));
 
             socket.on('Submission', function(state) {
               flux.actions.receiveSubmissionState(state);
@@ -181,6 +185,7 @@ var DeviceStateStore = Fluxxor.createStore({
     },
 
     receiveDeviceState: function(payload) {
+        this.connected = payload.deviceState.Connected;
         this.playing = payload.deviceState.Playing;
         this.current = payload.deviceState.Current;
         this.duration = payload.deviceState.Duration;
@@ -191,7 +196,6 @@ var DeviceStateStore = Fluxxor.createStore({
     },
 
     receiveDeviceSubmission: function(state) {
-      console.log('Process: ' + state.processing + ' - Progress: ' + state.progress);
       this.submission_processing = state.processing;
       this.submission_progress = state.progress;
       this.emit('change');

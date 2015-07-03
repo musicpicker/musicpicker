@@ -18,6 +18,7 @@ function deviceConnected(deviceId) {
 function createDeviceState(deviceId) {
   return new Promise(function(resolve, reject) {
     Promise.props({
+      Connected: tredis.exists('musichub.device.' + deviceId + '.connection'),
       Current: tredis.get('musichub.device.' + deviceId + '.current'),
       Duration: tredis.get('musichub.device.' + deviceId + '.duration'),
       Playing: tredis.get('musichub.device.' + deviceId + '.playing'),
@@ -25,6 +26,7 @@ function createDeviceState(deviceId) {
       Queue: tredis.lrange('musichub.device.' + deviceId + '.queue', 0, -1)
     }).then(function(result) {
       resolve({
+        Connected: Boolean(parseInt(result.Connected)),
         Current: parseInt(result.Current),
         Duration: parseInt(result.Duration),
         Playing: Boolean(parseInt(result.Playing)),
@@ -151,7 +153,7 @@ function play(io, socket, deviceId) {
   })
 }
 
-function onDisconnect(clientId) {
+function onDisconnect(io, socket, clientId) {
   tredis.get('musichub.devices.' + clientId).then(function(deviceId) {
     if (deviceId !== null) {
       Promise.all([
@@ -164,6 +166,7 @@ function onDisconnect(clientId) {
         tredis.del('musichub.device.' + deviceId + '.clients'),
         tredis.del('musichub.device.' + deviceId + '.connection'),
       ]);
+      sendClientState(io, socket, deviceId);
     }
     else {
       tredis.smembers('musichub.client.' + clientId + '.devices').then(function(members) {
@@ -203,6 +206,7 @@ function hub(io, clientId, socket) {
       if (device.get('OwnerId') === socket.client.user.id) {
         tredis.set('musichub.devices.' + clientId, deviceId);
         tredis.set('musichub.device.' + deviceId + '.connection', clientId);
+        sendClientState(io, socket, deviceId);
       }
     });
   });
@@ -213,9 +217,13 @@ function hub(io, clientId, socket) {
       Id: deviceId
     }).fetch().then(function(device) {
       if (device.get('OwnerId') === socket.client.user.id) {
-        tredis.sadd('musichub.client.' + clientId + '.devices', deviceId);
-        tredis.sadd('musichub.device.' + deviceId + '.clients', clientId);
-        socket.join('device.' + deviceId);
+        Promise.all([
+          tredis.sadd('musichub.client.' + clientId + '.devices', deviceId),
+          tredis.sadd('musichub.device.' + deviceId + '.clients', clientId),
+          socket.join('device.' + deviceId)
+        ]).then(function() {
+          socket.emit('ClientRegistered');
+        });
         reportSubmissionStatus(socket, deviceId);
       }
     });
@@ -250,9 +258,9 @@ function hub(io, clientId, socket) {
     });
   });
 
-  socket.on('GetState', function(data) {
-    checkRegistration(socket.id, data.DeviceId).then(function() {
-      createDeviceState(data.DeviceId).then(function(state) {
+  socket.on('GetState', function(deviceId) {
+    checkRegistration(socket.id, deviceId, true).then(function() {
+      createDeviceState(deviceId).then(function(state) {
         socket.emit('SetState', state);
       })
     });
@@ -327,7 +335,7 @@ module.exports = function(io) {
     var clientId = socket.id;
     hub(io, clientId, socket);
     socket.on('disconnect', function(socket) {
-      onDisconnect(clientId);
+      onDisconnect(io, socket, clientId);
     })
   })
 }
