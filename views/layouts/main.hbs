@@ -5,18 +5,11 @@
     <title>Musicpicker</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="styles.css" rel="stylesheet">
+    <script src="vendor.js"></script>
 </head>
 <body>
     <div class="container">
       {{{body}}}
     </div>
-
-    <script src="vendor.js"></script>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="app.js"></script>
-    <script type="text/javascript">
-      var main = React.createElement(Main, {flux: flux});
-      React.render(main, $('#app')[0]);
-    </script>
 </body>
 </html>

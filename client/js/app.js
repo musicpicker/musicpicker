@@ -50,8 +50,8 @@ var actions = {
         this.dispatch('DEVICE_START', {device: deviceId, bearer: bearer});
     },
 
-    signIn: function(username, password) {
-        this.dispatch('AUTH_SIGNIN', {username: username, password: password});
+    signIn: function(bearer) {
+        this.dispatch('AUTH_SIGNIN', bearer);
     },
 
     receiveSubmissionState: function(state) {
@@ -229,25 +229,16 @@ var AuthStore = Fluxxor.createStore({
         'DEVICE_START': 'startDevice'
     },
 
-    signIn: function(payload) {
-        jQuery.ajax('/oauth/token', {
-            method: 'POST',
-            data: {
-                grant_type: 'password',
-                username: payload.username,
-                password: payload.password
-            }
-        }).done(function(data) {
-            this.bearer = data.access_token
-            jQuery.ajax('/api/Devices', {
-                headers: {
-                    'Authorization': 'Bearer ' + this.bearer
-                }
-            }).done(function(data) {
-                this.devices = data;
-                this.emit('change');
-            }.bind(this));
-        }.bind(this));
+    signIn: function(bearer) {
+      this.bearer = bearer;
+      jQuery.ajax('/api/Devices', {
+          headers: {
+              'Authorization': 'Bearer ' + this.bearer
+          }
+      }).done(function(data) {
+          this.devices = data;
+          this.emit('change');
+      }.bind(this));
     },
 
     startDevice: function(payload) {
@@ -261,3 +252,11 @@ var flux = new Fluxxor.Flux({
     DeviceStateStore: new DeviceStateStore(),
     AuthStore: new AuthStore()
 }, actions);
+
+try {
+  var access_token = location.hash.split('#access_token=')[1].split('&')[0];
+  flux.actions.signIn(access_token);
+}
+catch (ex) {
+  window.location = location.origin + '/oauth/authorize?response_type=token&redirect_uri=' + location.origin
+}

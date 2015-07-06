@@ -53,6 +53,11 @@ var Main = React.createClass({
             return (
               <div>
                 <div className="row">
+                    <div className="col-sm-12">
+                        <h3>Musicpicker</h3>
+                    </div>
+                </div>
+                <div className="row">
                   <Submission />
                 </div>
                 <div className="row">
@@ -68,30 +73,23 @@ var Main = React.createClass({
             );
         }
         else {
-            if (this.state.bearer === null) {
-                var loginArea = <LoginForm />
-            }
-            else {
-                var loginArea = <b>Login successful !</b>
-            }
-
-            return (
-                <div className="row">
-                    <div className="col-md-4">
-                        <h4>Sign In</h4><hr />
-                        {loginArea}
+          return (
+              <div className="row">
+                <br />
+                <div className="col-md-4 col-md-offset-4">
+                  <div className="panel panel-primary">
+                    <div className="panel-body">
+                      <h3 className="text-center">Musicpicker</h3><br />
+                      <div className="list-group">
+                          {this.state.devices.map(function(device) {
+                              return <DeviceItem data={device} />;
+                          })}
+                      </div>
                     </div>
-
-                    <div className="col-md-8">
-                        <h4>Devices</h4><hr />
-                        <div className="list-group">
-                            {this.state.devices.map(function(device) {
-                                return <DeviceItem data={device} />;
-                            })}
-                        </div>
-                    </div>
+                  </div>
                 </div>
-            )
+              </div>
+          )
         }
     }
 })

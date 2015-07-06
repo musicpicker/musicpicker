@@ -8,7 +8,10 @@ var LocalStrategy = require('passport-local').Strategy;
 var oauth2orize = require('oauth2orize');
 var uuid = require('node-uuid');
 
+var ensureLoggedIn = require('connect-ensure-login').ensureLoggedIn;
+
 var models = require('../models');
+var server = oauth2orize.createServer();
 
 passport.serializeUser(function(user, done) {
   done(null, user.id);
@@ -22,6 +25,14 @@ passport.deserializeUser(function(id, done) {
   }).catch(function(err) {
     return done(null, false);
   });
+});
+
+server.serializeClient(function(client, done) {
+  return done(null, client);
+});
+
+server.deserializeClient(function(id, done) {
+  return done(null, id);
 });
 
 passport.use(new ResourceOwnerPasswordStrategy(
@@ -56,7 +67,6 @@ passport.use(new LocalStrategy(
   }
 ));
 
-var server = oauth2orize.createServer();
 server.exchange(oauth2orize.exchange.password(
   function(client, username, password, scope, done) {
     var sha = require('crypto').createHash('sha256');
@@ -96,6 +106,23 @@ router.get('/login', function(req, res) {
 });
 
 router.post('/login', passport.authenticate('local', { successReturnToOrRedirect: '/', failureRedirect: '/login' }));
+
+server.grant(oauth2orize.grant.token(function(client, user, ares, done) {
+  done(null, user.get('Token'));
+}));
+
+router.get('/oauth/authorize',
+  ensureLoggedIn('/login'),
+  function(req, res, next) {
+    req.query['client_id']= 'API Client';
+    next();
+  },
+  server.authorization(function(clientID, redirectURI, done) {
+    done(null, clientID, redirectURI);
+  }, function (client, user, done) {
+    done(null, client, user);
+  })
+);
 
 passport.use(new BearerStrategy(
   function(token, done) {
