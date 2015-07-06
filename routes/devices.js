@@ -18,8 +18,10 @@ router.use(passport.authenticate('bearer', {session: false}));
 
 router.get('/', function(req, res) {
   if (req.query['name'] === undefined) {
-    new models.Device({
-      OwnerId: req.user.id
+    models.Device.query({
+      where: {
+        OwnerId: req.user.id
+      }
     }).fetchAll().then(function(devices) {
       return res.json(devices);
     });
