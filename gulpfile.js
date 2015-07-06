@@ -8,10 +8,7 @@ var minifyCss = require('gulp-minify-css');
 var mainBowerFiles = require('main-bower-files');
 
 gulp.task('default', ['build']);
-gulp.task('build', ['app', 'vendor', 'styles'], function() {
-  return gulp.src('client/index.html')
-    .pipe(gulp.dest('public/'));
-});
+gulp.task('build', ['app', 'vendor', 'styles']);
 
 gulp.task('app', function() {
   return gulp.src(['client/js/**/*.js', 'client/js/**/*.jsx'])

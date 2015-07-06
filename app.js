@@ -1,5 +1,6 @@
 var express = require('express');
 var errorHandler = require('express-error-handler')
+var exphbs  = require('express-handlebars');
 var path = require('path');
 var favicon = require('serve-favicon');
 var logger = require('morgan');
@@ -15,6 +16,8 @@ var metadata = require('./routes/metadata');
 
 var app = express();
 app.use(errorHandler());
+app.engine('.hbs', exphbs({defaultLayout: 'main', extname: '.hbs'}));
+app.set('view engine', '.hbs');
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(__dirname + '/public/favicon.ico'));
@@ -25,6 +28,10 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(passport.initialize());
+
+app.get('/', function(req, res) {
+  res.render('home');
+});
 
 app.use('/oauth', auth);
 app.use('/api/account', account);
