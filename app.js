@@ -6,6 +6,7 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var cookieSession = require('cookie-session')
 
 var passport = require('passport');
 
@@ -27,13 +28,19 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use(cookieSession({
+  'name': 'session',
+  'keys': ['N7kgMzjcDlngLKDIyxKltffPLVRWMPhN/kT1hg/DHEE=']
+}));
 app.use(passport.initialize());
+app.use(passport.session());
 
-app.get('/', function(req, res) {
+app.get('/',
+  function(req, res) {
   res.render('home');
 });
 
-app.use('/oauth', auth);
+app.use('/', auth);
 app.use('/api/account', account);
 app.use('/api/devices', devices);
 app.use('/api', metadata);
