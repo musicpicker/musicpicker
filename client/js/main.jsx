@@ -56,12 +56,12 @@ var Main = React.createClass({
                   <Submission />
                 </div>
                 <div className="row">
-                    <div className="col-md-8">
-                        <CollectionBrowser />
-                    </div>
-                    <div className="col-md-4">
+                    <div className="col-md-4 col-md-push-8">
                         <Connection />
                         <Player />
+                    </div>
+                    <div className="col-md-8 col-md-pull-4">
+                        <CollectionBrowser />
                     </div>
                 </div>
               </div>
