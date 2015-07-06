@@ -45,7 +45,7 @@ var CollectionBrowser = React.createClass({
     render: function() {
         return (
             <div>
-                <ul className="nav nav-tabs nav-justified">
+                <ul className="nav nav-tabs">
                     <li role="presentation"><a href="#" onClick={this.showArtists}>Artists</a></li>
                     <li role="presentation"><a href="#" onClick={this.showAlbums}>Albums</a></li>
                     <li role="presentation"><a href="#" onClick={this.showTracks}>Tracks</a></li>

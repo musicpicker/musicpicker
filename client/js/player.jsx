@@ -85,10 +85,10 @@ var Player = React.createClass({
 
     render: function() {
         if (this.state.playing) {
-            var pause = <button type="button" className="btn btn-primary" onClick={this.pause}>Pause</button>;
+            var pause = <button type="button" className="btn btn-primary" onClick={this.pause}><span className="glyphicon glyphicon-pause"></span></button>;
         }
         else {
-            var pause = <button type="button" className="btn btn-primary" onClick={this.play}>Play</button>;
+            var pause = <button type="button" className="btn btn-primary" onClick={this.play}><span className="glyphicon glyphicon-play"></span></button>;
         }
        return (
            <div className="panel panel-primary">
@@ -97,7 +97,7 @@ var Player = React.createClass({
                    <TrackInfo id={this.state.current} />
                    <div className="btn-group" role="group">
                        {pause}
-                       <button type="button" className="btn btn-default" onClick={this.next}>Next</button>
+                       <button type="button" className="btn btn-default" onClick={this.next}><span className="glyphicon glyphicon-step-forward"></span></button>
                    </div>
                </div>
            </div>
