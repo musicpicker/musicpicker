@@ -10,20 +10,6 @@ var uuid = require('node-uuid');
 
 var models = require('../models');
 
-function verifyCredentials(username, password, done) {
-  var sha = require('crypto').createHash('sha256');
-  sha.update(password);
-
-  new models.User({
-    Username: username,
-    Password: sha.digest('hex')
-  }).fetch().then(function(user) {
-    return done(null, user);
-  }).catch(function(err) {
-    return done(null, false);
-  });
-}
-
 passport.serializeUser(function(user, done) {
   done(null, user.id);
 });
@@ -40,14 +26,33 @@ passport.deserializeUser(function(id, done) {
 
 passport.use(new ResourceOwnerPasswordStrategy(
   function(clientId, clientSecret, username, password, done) {
-    verifyCredentials(username, password, done);
+    var sha = require('crypto').createHash('sha256');
+    sha.update(password);
+
+    new models.User({
+      Username: username,
+      Password: sha.digest('hex')
+    }).fetch().then(function(user) {
+      return done(null, clientId, user);
+    }).catch(function(err) {
+      return done(null, clientId, false);
+    });
   }
 ));
 
 passport.use(new LocalStrategy(
   function(username, password, done) {
-    console.log(username + ' ' + password);
-    verifyCredentials(username, password, done);
+    var sha = require('crypto').createHash('sha256');
+    sha.update(password);
+
+    new models.User({
+      Username: username,
+      Password: sha.digest('hex')
+    }).fetch().then(function(user) {
+      return done(null, user);
+    }).catch(function(err) {
+      return done(null, false);
+    });
   }
 ));
 
