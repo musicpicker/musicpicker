@@ -1,13 +1,14 @@
 var gulp = require('gulp');
 var concat = require('gulp-concat');
 var bower = require('gulp-bower');
+var less = require('gulp-less');
 var react = require('gulp-react');
 var uglify = require('gulp-uglify');
 var minifyCss = require('gulp-minify-css');
 var mainBowerFiles = require('main-bower-files');
 
 gulp.task('default', ['build']);
-gulp.task('build', ['app', 'vendor', 'style'], function() {
+gulp.task('build', ['app', 'vendor', 'styles'], function() {
   return gulp.src('client/index.html')
     .pipe(gulp.dest('public/'));
 });
@@ -27,9 +28,9 @@ gulp.task('vendor', ['bower'], function() {
     .pipe(gulp.dest('public/'));
 });
 
-gulp.task('style', ['bower'], function() {
-  return gulp.src(mainBowerFiles('**/*.css'))
-    .pipe(concat('style.css'))
+gulp.task('styles', ['bower'], function() {
+  return gulp.src('client/styles.less')
+    .pipe(less())
     .pipe(minifyCss())
     .pipe(gulp.dest('public/'));
 });
