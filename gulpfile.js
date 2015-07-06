@@ -28,11 +28,16 @@ gulp.task('vendor', ['bower'], function() {
     .pipe(gulp.dest('public/'));
 });
 
-gulp.task('styles', ['bower'], function() {
+gulp.task('styles', ['bower', 'fonts'], function() {
   return gulp.src('client/styles.less')
     .pipe(less())
     .pipe(minifyCss())
     .pipe(gulp.dest('public/'));
+});
+
+gulp.task('fonts', ['bower'], function() {
+  return gulp.src(mainBowerFiles('**/fonts/**'))
+    .pipe(gulp.dest('public/fonts'));
 });
 
 gulp.task('bower', function() {
