@@ -102,7 +102,15 @@ router.post('/token',
 );
 
 server.grant(oauth2orize.grant.token(function(client, user, ares, done) {
-  done(null, user.get('Token'));
+  if (user.get('Token') === null) {
+    user.set({Token: uuid.v4()});
+    user.save().then(function(user) {
+      return done(null, user.get('Token'));
+    })
+  }
+  else {
+    return done(null, user.get('Token'));
+  }
 }));
 
 router.get('/authorize',
