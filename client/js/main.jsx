@@ -85,6 +85,10 @@ var Main = React.createClass({
                               return <DeviceItem data={device} />;
                           })}
                       </div>
+
+                      <div className="text-right">
+                        <a href="/logout" className="btn btn-danger">Log out</a>
+                      </div>
                     </div>
                   </div>
                 </div>

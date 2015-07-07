@@ -91,7 +91,7 @@ server.exchange(oauth2orize.exchange.password(
   }
 ));
 
-router.post('/oauth/token',
+router.post('/token',
   function(req, res, next) {
     req.body['client_id'] = 'API Client'
     next();
@@ -101,17 +101,11 @@ router.post('/oauth/token',
   server.errorHandler()
 );
 
-router.get('/login', function(req, res) {
-  res.render('login');
-});
-
-router.post('/login', passport.authenticate('local', { successReturnToOrRedirect: '/', failureRedirect: '/login' }));
-
 server.grant(oauth2orize.grant.token(function(client, user, ares, done) {
   done(null, user.get('Token'));
 }));
 
-router.get('/oauth/authorize',
+router.get('/authorize',
   ensureLoggedIn('/login'),
   function(req, res, next) {
     req.query['client_id']= 'API Client';

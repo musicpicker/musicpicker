@@ -1,33 +1,77 @@
 var express = require('express');
 var router = express.Router();
-
+var passport = require('passport');
+var Promise = require('bluebird');
 var models = require('../models');
 
-router.post('/register', function(req, res) {
-  if (req.body['Username'] === undefined) {
-    return res.status(400).send('Username must be provided');
-  }
+function registerUser(username, password, confirm) {
+  return new Promise(function(resolve, reject) {
+    if (username === undefined) {
+      return reject('Username must be provided');
+    }
 
-  if (req.body['Password'].length < 6) {
-    return res.status(400).send('Password too short');
-  }
+    if (password.length < 6) {
+      return reject('Password too short');
+    }
 
-  if (req.body['Password'] !== req.body['ConfirmPassword']) {
-    return res.status(400).send('Password confirmation doesn\'t match wanted password');
-  }
+    if (password !== confirm) {
+      return reject('Password confirmation doesn\'t match wanted password');
+    }
 
-  var sha = require('crypto').createHash('sha256');
-  sha.update(req.body['Password']);
+    var sha = require('crypto').createHash('sha256');
+    sha.update(password);
 
-  new models.User({
-    Username: req.body['Username'],
-    Password: sha.digest('hex')
-  }).save().then(function(user) {
-    console.log(user);
+    new models.User({
+      Username: username,
+      Password: sha.digest('hex')
+    }).save().then(function(user) {
+      return resolve();
+    }).catch(function(err) {
+      return reject(err);
+    });
+  });
+}
+
+router.post('/api/account/register', function(req, res) {
+  registerUser(req.body['Username'], req.body['Password'], req.body['ConfirmPassword']).then(function() {
     return res.sendStatus(200);
   }).catch(function(err) {
-    return res.sendStatus(500);
+    if (err !== undefined) {
+      return res.status(400).send(err);
+    }
+    else {
+      return res.sendStatus(500);
+    }
   });
 });
+
+router.get('/login', function(req, res) {
+  res.render('login');
+});
+router.post('/login', passport.authenticate('local', { successReturnToOrRedirect: '/', failureRedirect: '/login' }));
+
+router.get('/logout', function(req, res) {
+  req.logout();
+  res.redirect('/login');
+});
+
+router.get('/signup', function(req, res) {
+  res.render('signup');
+});
+router.post('/signup',
+  function(req, res, next) {
+    registerUser(req.body['username'], req.body['password'], req.body['password2']).then(function() {
+      next();
+    }).catch(function(err) {
+      if (err !== undefined) {
+        return res.status(400).send(err);
+      }
+      else {
+        return res.sendStatus(500);
+      }
+    });
+  },
+  passport.authenticate('local', { successReturnToOrRedirect: '/', failureRedirect: '/login' })
+);
 
 module.exports = router;

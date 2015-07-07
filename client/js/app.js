@@ -255,6 +255,7 @@ var flux = new Fluxxor.Flux({
 
 try {
   var access_token = location.hash.split('#access_token=')[1].split('&')[0];
+  location.hash = '';
   flux.actions.signIn(access_token);
 }
 catch (ex) {

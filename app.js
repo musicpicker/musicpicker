@@ -40,8 +40,8 @@ app.get('/',
   res.render('home');
 });
 
-app.use('/', auth);
-app.use('/api/account', account);
+app.use('/', account);
+app.use('/oauth', auth);
 app.use('/api/devices', devices);
 app.use('/api', metadata);
 
