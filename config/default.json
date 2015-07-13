@@ -1,0 +1,11 @@
+{
+  "database": {
+    "client": "sqlite3",
+    "connection": {
+      "filename": "./musicpicker.db"
+    }
+  },
+  "redis": {
+    "host": "localhost"
+  }
+}

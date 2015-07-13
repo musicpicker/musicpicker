@@ -1,6 +1,7 @@
-var redis = require('redis-scanstreams')(require('redis')).createClient();
-var tredis = require('then-redis').createClient();
-var redisChan = require('redis').createClient();
+var config = require('config');
+var redis = require('redis-scanstreams')(require('redis')).createClient(6379, config.get('redis.host'));
+var tredis = require('then-redis').createClient(config.get('redis'));
+var redisChan = require('redis').createClient(6379, config.get('redis.host'));
 var kue = require('kue');
 var queue = require('./queue');
 var auth = require('socketio-auth');

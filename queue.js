@@ -1,2 +1,5 @@
 var kue = require('kue');
-module.exports = kue.createQueue();;
+var config = require('config');
+module.exports = kue.createQueue({
+  redis: config.get('redis')
+});

@@ -1,5 +1,6 @@
 var express = require('express');
 var router = express.Router();
+var config = require('config');
 
 var passport = require('passport');
 var models = require('../models');
@@ -9,7 +10,7 @@ var Promise = require('bluebird');
 var kue = require('kue');
 var request = require('request');
 
-var redis = require('redis-scanstreams')(require('redis')).createClient();
+var redis = require('redis-scanstreams')(require('redis')).createClient(6379, config.get('redis.host'));
 var toArray = require('stream-to-array')
 
 var queue = require('../queue');

@@ -1,0 +1,20 @@
+{
+  "database": {
+    "client": "postgresql",
+    "connection": {
+      "host": "db",
+      "database": "picker",
+      "user":     "postgres"
+    },
+    "pool": {
+      "min": 2,
+      "max": 10
+    },
+    "migrations": {
+      "tableName": "knex_migrations"
+    }
+  },
+  "redis": {
+    "host": "redis"
+  }
+}
