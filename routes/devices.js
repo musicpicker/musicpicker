@@ -244,7 +244,7 @@ function getArtwork(submission, albumId, done) {
         var result = JSON.parse(body);
       }
       catch (ex) {
-        done();
+        return done();
       }
       if (result.album !== undefined && result.album.image !== undefined) {
         var images = result.album.image;
