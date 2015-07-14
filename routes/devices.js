@@ -240,7 +240,12 @@ function getArtwork(submission, albumId, done) {
 
   request(url, function(error, response, body) {
     if (!error && response.statusCode == 200) {
-      var result = JSON.parse(body);
+      try {
+        var result = JSON.parse(body);
+      }
+      catch (ex) {
+        done();
+      }
       if (result.album !== undefined && result.album.image !== undefined) {
         var images = result.album.image;
         if (images.length > 0) {
