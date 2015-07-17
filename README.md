@@ -1,4 +1,4 @@
-# MusicPicker
+# Musicpicker
 
 [![Dependency Status](https://gemnasium.com/hugoatease/musicpicker.svg)](https://gemnasium.com/hugoatease/musicpicker)
 
