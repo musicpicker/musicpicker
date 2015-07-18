@@ -229,7 +229,7 @@ function hub(io, clientId, socket) {
 
   socket.on('Queue', function(data) {
     var deviceId = data.DeviceId;
-    var trackIds = data.TrackIds;
+    var trackIds = data.TrackIds.slice(0, 100);
 
     checkRegistration(socket.id, deviceId).then(function() {
       Promise.all([
