@@ -1,18 +1,3 @@
-/*var TrackItem = React.createClass({
-    getDefaultProps: function() {
-        return {
-            id: null,
-            name: null
-        }
-    },
-
-    render: function() {
-        return(
-            <button onClick={this.select} type="button" className="list-group-item">{this.props.name}</button>
-        );
-    }
-});*/
-
 var TracksView = React.createClass({
     mixins: [FluxMixin],
 

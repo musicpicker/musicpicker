@@ -28,7 +28,15 @@ var CollectionView = React.createClass({
 });
 
 var CollectionBrowser = React.createClass({
-    mixins: [FluxMixin],
+    mixins: [FluxMixin, StoreWatchMixin('DeviceStateStore')],
+
+    getStateFromFlux: function() {
+      var flux = this.getFlux();
+      return {
+        submission_processing: flux.store('DeviceStateStore').submission_processing,
+        submission_progress: flux.store('DeviceStateStore').submission_progress
+      }
+    },
 
     showArtists: function() {
         this.getFlux().actions.showArtists();
@@ -43,6 +51,7 @@ var CollectionBrowser = React.createClass({
     },
 
     render: function() {
+      if (!this.state.submission_processing) {
         return (
             <div>
                 <ul className="nav nav-tabs">
@@ -53,5 +62,15 @@ var CollectionBrowser = React.createClass({
                 <CollectionView />
             </div>
         );
+      }
+      else {
+        return (
+          <div>
+            <h4>Processing your music collection</h4>
+            <p>Please wait while we import your device's music library.</p>
+            <Submission />
+          </div>
+        );
+      }
     }
 });
