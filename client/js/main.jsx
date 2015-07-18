@@ -84,7 +84,7 @@ var Main = React.createClass({
 												<p className="text-center">
 						              <span style={{fontSize: '3em'}} className="glyphicon glyphicon-cd"></span><br />
 						              <b>Authenticating</b><br />
-						              Please wait while we're get you logged in
+						              Please wait while we get you logged in
 						            </p>
                       </div>
                     </div>
