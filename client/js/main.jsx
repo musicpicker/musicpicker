@@ -76,12 +76,12 @@ var Main = React.createClass({
           var devices = (
             <p className="text-center">
               <span style={{fontSize: '3em'}} className="glyphicon glyphicon-info-sign"></span><br />
-              <b>No registered devices yet</b>
-              <p>Please download Musicpicker player and connect it to your account.</p>
+              <b>No registered devices yet</b><br />
+              Please download Musicpicker player and connect it to your account.
             </p>
           );
           if (this.state.devices.length > 0) {
-            devices = (
+            var devices = (
               <div className="list-group">
                   {this.state.devices.map(function(device) {
                       return <DeviceItem data={device} />;
