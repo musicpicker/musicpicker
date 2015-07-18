@@ -73,6 +73,22 @@ var Main = React.createClass({
             );
         }
         else {
+          var devices = (
+            <p className="text-center">
+              <span style={{fontSize: '3em'}} className="glyphicon glyphicon-info-sign"></span><br />
+              <b>No registered devices yet</b>
+              <p>Please download Musicpicker player and connect it to your account.</p>
+            </p>
+          );
+          if (this.state.devices.length > 0) {
+            devices = (
+              <div className="list-group">
+                  {this.state.devices.map(function(device) {
+                      return <DeviceItem data={device} />;
+                  })}
+              </div>
+            );
+          }
           return (
               <div className="row">
                 <br />
@@ -80,17 +96,14 @@ var Main = React.createClass({
                   <div className="panel panel-primary">
                     <div className="panel-body">
                       <h3 className="text-center">Musicpicker</h3><br />
-                      <div className="list-group">
-                          {this.state.devices.map(function(device) {
-                              return <DeviceItem data={device} />;
-                          })}
-                      </div>
+                      {devices}
 
                       <div className="text-right">
                         <a href="/logout" className="btn btn-danger">Log out</a>
                       </div>
                     </div>
                   </div>
+                  <GHRelease />
                 </div>
               </div>
           )

@@ -252,12 +252,3 @@ var flux = new Fluxxor.Flux({
     DeviceStateStore: new DeviceStateStore(),
     AuthStore: new AuthStore()
 }, actions);
-
-try {
-  var access_token = location.hash.split('#access_token=')[1].split('&')[0];
-  location.hash = '';
-  flux.actions.signIn(access_token);
-}
-catch (ex) {
-  window.location = location.origin + '/oauth/authorize?response_type=token&redirect_uri=' + location.origin
-}

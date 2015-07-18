@@ -1,8 +1,16 @@
 <div id="app"></div>
 
 <script src="/socket.io/socket.io.js"></script>
-<script src="app.js"></script>
 <script type="text/javascript">
+  try {
+    var access_token = location.hash.split('#access_token=')[1].split('&')[0];
+    location.hash = '';
+    flux.actions.signIn(access_token);
+  }
+  catch (ex) {
+    window.location = location.origin + '/oauth/authorize?response_type=token&redirect_uri=' + location.origin
+  }
+
   var main = React.createElement(Main, {flux: flux});
   React.render(main, $('#app')[0]);
 </script>
