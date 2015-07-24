@@ -7,5 +7,9 @@
   },
   "redis": {
     "host": "localhost"
+  },
+  "statsd": {
+  	"host": "localhost",
+  	"port": 8125
   }
 }

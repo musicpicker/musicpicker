@@ -16,5 +16,9 @@
   },
   "redis": {
     "host": "redis"
+  },
+  "statsd": {
+    "host": "statsd",
+    "port": 8125
   }
 }

@@ -8,6 +8,8 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var cookieSession = require('cookie-session')
 
+var config = require('config');
+
 var passport = require('passport');
 
 var auth = require('./routes/oauth');
@@ -21,8 +23,11 @@ app.engine('.hbs', exphbs({defaultLayout: 'main', extname: '.hbs'}));
 app.set('view engine', '.hbs');
 
 var expressStatsd = require('express-statsd');
+var lynx = require('lynx');
 var statsd = require('./statsd');
-app.use(expressStatsd());
+app.use(expressStatsd({
+	client: new lynx(config.get('statsd.host'), config.get('statsd.port'))
+}));
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(__dirname + '/public/favicon.ico'));
