@@ -18,8 +18,9 @@ var statsd = require('../statsd');
 
 router.use(passport.authenticate('bearer', {session: false}));
 
-router.get('/', statsd('device-list'), function(req, res) {
+router.get('/', function(req, res) {
   if (req.query['name'] === undefined) {
+    req.statsdKey = 'http.device-list.get';
     models.Device.query({
       where: {
         OwnerId: req.user.id
@@ -29,6 +30,7 @@ router.get('/', statsd('device-list'), function(req, res) {
     });
   }
   else {
+    req.statsdKey = 'http.device-list-filter.get';
     new models.Device({
       OwnerId: req.user.id,
       Name: req.query['name']

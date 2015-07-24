@@ -4,12 +4,13 @@ var models = require('../models');
 var knex = require('../knex');
 var statsd = require('../statsd');
 
-router.get('/tracks', statsd('meta-tracks-list'), function(req, res) {
+router.get('/tracks', function(req, res) {
   var deviceId = req.query['device'];
   var request = knex.select('tracks.*').from('tracks').
       innerJoin('deviceTracks', 'tracks.Id', 'deviceTracks.TrackId').
       where('deviceTracks.DeviceId', req.query['device']).orderBy('tracks.Number');
   if (req.query['album'] === undefined) {
+    req.statsdKey = 'http.meta-tracks-list.get';
     request.then(function(result) {
       res.json(result);
     }).catch(function(err) {
@@ -17,6 +18,7 @@ router.get('/tracks', statsd('meta-tracks-list'), function(req, res) {
     });
   }
   else {
+    req.statsdKey = 'http.meta-tracks-list-filter.get';
     request.where('tracks.AlbumId', req.query['album']).then(function(result) {
       res.json(result);
     }).catch(function(err) {
@@ -33,13 +35,14 @@ router.get('/tracks/:id', statsd('meta-tracks-detail'), function(req, res) {
   });
 });
 
-router.get('/albums', statsd('meta-albums-list'), function(req, res) {
+router.get('/albums', function(req, res) {
   var deviceId = req.query['device'];
   var request = knex.select('albums.*').from('tracks').innerJoin('deviceTracks', 'tracks.Id', 'deviceTracks.TrackId').
     where('deviceTracks.DeviceId', req.query['device']).innerJoin('albums', 'tracks.AlbumId', 'albums.Id').
     distinct('albums.Id').orderBy('albums.Name');
 
   if (req.query['artist'] === undefined) {
+    req.statsdKey = 'http.meta-albums-list.get';
     request.then(function(result) {
       res.json(result);
     }).catch(function(err) {
@@ -47,6 +50,7 @@ router.get('/albums', statsd('meta-albums-list'), function(req, res) {
     });
   }
   else {
+    req.statsdKey = 'http.meta-albums-list-filter.get';
     request.where('albums.ArtistId', req.query['artist']).then(function(result) {
       res.json(result);
     }).catch(function(err) {
