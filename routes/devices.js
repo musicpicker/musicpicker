@@ -14,10 +14,11 @@ var redis = require('redis-scanstreams')(require('redis')).createClient(6379, co
 var toArray = require('stream-to-array')
 
 var queue = require('../queue');
+var statsd = require('../statsd');
 
 router.use(passport.authenticate('bearer', {session: false}));
 
-router.get('/', function(req, res) {
+router.get('/', statsd('device-list'), function(req, res) {
   if (req.query['name'] === undefined) {
     models.Device.query({
       where: {
@@ -39,7 +40,7 @@ router.get('/', function(req, res) {
   }
 });
 
-router.post('/', function(req, res) {
+router.post('/', statsd('device-list'), function(req, res) {
   new models.Device({
     OwnerId: req.user.id,
     Name: req.body['name'],
@@ -48,7 +49,7 @@ router.post('/', function(req, res) {
   });
 });
 
-router.get('/:id', function(req, res) {
+router.get('/:id', statsd('device-detail'), function(req, res) {
   new models.Device({
     id: req.params['id'],
     OwnerId: req.user.id
@@ -59,7 +60,7 @@ router.get('/:id', function(req, res) {
   });
 })
 
-router.delete('/:id', function(req, res) {
+router.delete('/:id', statsd('device-detail'), function(req, res) {
   new models.Device({
     id: req.params['id'],
     OwnerId: req.user.id
@@ -311,7 +312,7 @@ function processSubmissions(job, deviceId, userId, submissions, done) {
   }.bind(this));
 }
 
-router.post('/:id/submit', function(req, res) {
+router.post('/:id/submit', statsd('device-submit'), function(req, res) {
   var job = queue.create('submissions', {
     deviceId: req.params['id'],
     userId: req.user.id,

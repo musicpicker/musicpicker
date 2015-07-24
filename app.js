@@ -20,6 +20,10 @@ app.use(errorHandler());
 app.engine('.hbs', exphbs({defaultLayout: 'main', extname: '.hbs'}));
 app.set('view engine', '.hbs');
 
+var expressStatsd = require('express-statsd');
+var statsd = require('./statsd');
+app.use(expressStatsd());
+
 // uncomment after placing your favicon in /public
 //app.use(favicon(__dirname + '/public/favicon.ico'));
 app.use(logger('dev'));
@@ -35,7 +39,7 @@ app.use(cookieSession({
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.get('/',
+app.get('/', statsd('home'),
   function(req, res) {
   res.render('home');
 });

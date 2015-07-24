@@ -11,6 +11,8 @@ var uuid = require('node-uuid');
 var ensureLoggedIn = require('connect-ensure-login').ensureLoggedIn;
 
 var models = require('../models');
+var statsd = require('../statsd');
+
 var server = oauth2orize.createServer();
 
 passport.serializeUser(function(user, done) {
@@ -91,7 +93,7 @@ server.exchange(oauth2orize.exchange.password(
   }
 ));
 
-router.post('/token',
+router.post('/token', statsd('oauth-token'),
   function(req, res, next) {
     req.body['client_id'] = 'API Client'
     next();
@@ -113,7 +115,7 @@ server.grant(oauth2orize.grant.token(function(client, user, ares, done) {
   }
 }));
 
-router.get('/authorize',
+router.get('/authorize', statsd('oauth-authorize'),
   ensureLoggedIn('/login'),
   function(req, res, next) {
     req.query['client_id']= 'API Client';

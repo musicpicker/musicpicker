@@ -2,8 +2,9 @@ var express = require('express');
 var router = express.Router();
 var models = require('../models');
 var knex = require('../knex');
+var statsd = require('../statsd');
 
-router.get('/tracks', function(req, res) {
+router.get('/tracks', statsd('meta-tracks-list'), function(req, res) {
   var deviceId = req.query['device'];
   var request = knex.select('tracks.*').from('tracks').
       innerJoin('deviceTracks', 'tracks.Id', 'deviceTracks.TrackId').
@@ -24,7 +25,7 @@ router.get('/tracks', function(req, res) {
   }
 });
 
-router.get('/tracks/:id', function(req, res) {
+router.get('/tracks/:id', statsd('meta-tracks-detail'), function(req, res) {
   new models.Track({
     Id: req.params['id']
   }).fetch().then(function(track) {
@@ -32,7 +33,7 @@ router.get('/tracks/:id', function(req, res) {
   });
 });
 
-router.get('/albums', function(req, res) {
+router.get('/albums', statsd('meta-albums-list'), function(req, res) {
   var deviceId = req.query['device'];
   var request = knex.select('albums.*').from('tracks').innerJoin('deviceTracks', 'tracks.Id', 'deviceTracks.TrackId').
     where('deviceTracks.DeviceId', req.query['device']).innerJoin('albums', 'tracks.AlbumId', 'albums.Id').
@@ -54,7 +55,7 @@ router.get('/albums', function(req, res) {
   }
 });
 
-router.get('/albums/:id', function(req, res) {
+router.get('/albums/:id', statsd('meta-albums-detail'), function(req, res) {
   new models.Album({
     Id: req.params['id']
   }).fetch().then(function(album) {
@@ -62,7 +63,7 @@ router.get('/albums/:id', function(req, res) {
   });
 });
 
-router.get('/artists', function(req, res) {
+router.get('/artists', statsd('meta-artists-list'), function(req, res) {
   var deviceId = req.query['device'];
   var request = knex.select('artists.*').from('tracks').innerJoin('deviceTracks', 'tracks.Id', 'deviceTracks.TrackId').
     where('deviceTracks.DeviceId', req.query['device']).innerJoin('albums', 'tracks.AlbumId', 'albums.Id').
@@ -75,7 +76,7 @@ router.get('/artists', function(req, res) {
     });
 });
 
-router.get('/artists/:id', function(req, res) {
+router.get('/artists/:id', statsd('meta-artists-detail'), function(req, res) {
   new models.Artist({
     Id: req.params['id']
   }).fetch().then(function(artist) {

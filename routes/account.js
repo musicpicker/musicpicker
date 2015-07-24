@@ -3,6 +3,7 @@ var router = express.Router();
 var passport = require('passport');
 var Promise = require('bluebird');
 var models = require('../models');
+var statsd = require('../statsd');
 
 function registerUser(username, password, confirm) {
   return new Promise(function(resolve, reject) {
@@ -32,7 +33,7 @@ function registerUser(username, password, confirm) {
   });
 }
 
-router.post('/api/account/register', function(req, res) {
+router.post('/api/account/register', statsd('account-register'), function(req, res) {
   registerUser(req.body['Username'], req.body['Password'], req.body['ConfirmPassword']).then(function() {
     return res.sendStatus(200);
   }).catch(function(err) {
@@ -45,20 +46,20 @@ router.post('/api/account/register', function(req, res) {
   });
 });
 
-router.get('/login', function(req, res) {
+router.get('/login', statsd('login'), function(req, res) {
   res.render('login');
 });
 router.post('/login', passport.authenticate('local', { successReturnToOrRedirect: '/', failureRedirect: '/login' }));
 
-router.get('/logout', function(req, res) {
+router.get('/logout', statsd('logout'), function(req, res) {
   req.logout();
   res.redirect('/login');
 });
 
-router.get('/signup', function(req, res) {
+router.get('/signup', statsd('account-signup'), function(req, res) {
   res.render('signup');
 });
-router.post('/signup',
+router.post('/signup', statsd('account-signup'),
   function(req, res, next) {
     registerUser(req.body['username'], req.body['password'], req.body['password2']).then(function() {
       next();
