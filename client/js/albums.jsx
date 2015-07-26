@@ -45,7 +45,7 @@ var AlbumsView = React.createClass({
 
         jQuery.ajax(url, {
             headers: {
-                'Authorization': 'Bearer ' + this.getFlux().store('CollectionStore').bearer
+                'Authorization': 'Bearer ' + this.getFlux().store('AuthStore').bearer
             }
         }).done(function(data) {
             this.setState({albums: data});

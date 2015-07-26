@@ -223,14 +223,7 @@ var AuthStore = Fluxxor.createStore({
 
     signIn: function(bearer) {
       this.bearer = bearer;
-      jQuery.ajax('/api/Devices', {
-          headers: {
-              'Authorization': 'Bearer ' + this.bearer
-          }
-      }).done(function(data) {
-          this.devices = data;
-          this.emit('change');
-      }.bind(this));
+      this.emit('change');
     },
 
     startDevice: function(payload) {
