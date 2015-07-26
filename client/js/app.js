@@ -3,11 +3,11 @@ var StoreWatchMixin = Fluxxor.StoreWatchMixin;
 
 var actions = {
     showAlbumsByArtist: function(artist) {
-        this.dispatch('SHOW_ALBUMS_BY_ARTIST', {artist: artist});
+        this.dispatch('SHOW_ALBUMS_BY_ARTIST', artist);
     },
 
     showTracksByAlbum: function(album) {
-        this.dispatch('SHOW_TRACKS_BY_ALBUM', {album: album});
+        this.dispatch('SHOW_TRACKS_BY_ALBUM', album);
     },
 
     back: function() {
@@ -27,11 +27,11 @@ var actions = {
     },
 
     receiveDeviceState: function(deviceState) {
-        this.dispatch('DEVICE_STATE', {deviceState: deviceState});
+        this.dispatch('DEVICE_STATE', deviceState);
     },
 
     queue: function(trackIds) {
-        this.dispatch('SEND_QUEUE', {trackIds: trackIds});
+        this.dispatch('SEND_QUEUE', trackIds);
     },
 
     play: function() {
@@ -106,16 +106,16 @@ var CollectionStore = Fluxxor.createStore({
         this.emit('change');
     },
 
-    showAlbumsByArtist: function(payload) {
+    showAlbumsByArtist: function(artist) {
         this.view = 'albums';
-        this.artist = payload.artist;
+        this.artist = artist;
         this.album = null;
         this.emit('change');
     },
 
-    showTracksByAlbum: function(payload) {
+    showTracksByAlbum: function(album) {
         this.view = 'tracks';
-        this.album = payload.album;
+        this.album = album;
         this.emit('change');
     },
 
@@ -184,14 +184,14 @@ var DeviceStateStore = Fluxxor.createStore({
         }.bind(this));
     },
 
-    receiveDeviceState: function(payload) {
-        this.connected = payload.deviceState.Connected;
-        this.playing = payload.deviceState.Playing;
-        this.current = payload.deviceState.Current;
-        this.duration = payload.deviceState.Duration;
-        this.lastPause = payload.deviceState.LastPause;
-        this.queue = payload.deviceState.Queue;
-        console.log(payload);
+    receiveDeviceState: function(deviceState) {
+        this.connected = deviceState.Connected;
+        this.playing = deviceState.Playing;
+        this.current = deviceState.Current;
+        this.duration = deviceState.Duration;
+        this.lastPause = deviceState.LastPause;
+        this.queue = deviceState.Queue;
+        console.log(deviceState);
         this.emit('change');
     },
 
@@ -201,9 +201,9 @@ var DeviceStateStore = Fluxxor.createStore({
       this.emit('change');
     },
 
-    sendQueue: function(payload) {
-        console.log(payload);
-        window.socket.emit('Queue', {DeviceId: this.device, TrackIds: payload.trackIds});
+    sendQueue: function(trackIds) {
+        console.log(trackIds);
+        window.socket.emit('Queue', {DeviceId: this.device, TrackIds: trackIds});
     },
 
     sendPause: function() {
