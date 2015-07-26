@@ -85,12 +85,18 @@ function getArtist(submission) {
           Name: submission.Artist
         }).fetch().then(function(artist) {
           redis.set('musicpicker.submissions.' + submission.Artist, artist.id);
+          if (config.has('redis.cache.expire')) {
+            redis.expire('musicpicker.submissions.' + submission.Artist, config.get('redis.cache.expire'));
+          }
           resolve(artist.id);
         }).catch(function(err) {
           new models.Artist({
             Name: submission.Artist
           }).save().then(function(artist) {
             redis.set('musicpicker.submissions.' + submission.Artist, artist.id);
+            if (config.has('redis.cache.expire')) {
+              redis.expire('musicpicker.submissions.' + submission.Artist, config.get('redis.cache.expire'));
+            }
             resolve(artist.id);
           }).catch(function(err) {
             resolve();
@@ -98,6 +104,9 @@ function getArtist(submission) {
         });
       }
       else {
+        if (config.has('redis.cache.expire')) {
+          redis.expire('musicpicker.submissions.' + submission.Artist, config.get('redis.cache.expire'));
+        }
         resolve(reply);
       }
     });
@@ -117,6 +126,9 @@ function getAlbum(submission, artistId) {
             ArtistId: artistId
           }).fetch().then(function(album) {
             redis.set('musicpicker.submissions.' + submission.Artist + '.' + submission.Album, album.id);
+            if (config.has('redis.cache.expire')) {
+              redis.expire('musicpicker.submissions.' + submission.Artist + '.' + submission.Album, config.get('redis.cache.expire'));
+            }
             resolve(album.id);
           }).catch(function(err) {
             new models.Album({
@@ -125,6 +137,9 @@ function getAlbum(submission, artistId) {
               Year: submission.Year
             }).save().then(function(album) {
               redis.set('musicpicker.submissions.' + submission.Artist + '.' + submission.Album, album.id);
+              if (config.has('redis.cache.expire')) {
+                redis.expire('musicpicker.submissions.' + submission.Artist + '.' + submission.Album, config.get('redis.cache.expire'));
+              }
               queue.create('artworks', {
                 submission: submission,
                 albumId: album.id
@@ -136,6 +151,9 @@ function getAlbum(submission, artistId) {
           });
         }
         else {
+          if (config.has('redis.cache.expire')) {
+            redis.expire('musicpicker.submissions.' + submission.Artist + '.' + submission.Album, config.get('redis.cache.expire'));
+          }
           resolve(reply);
         }
       });
@@ -156,6 +174,10 @@ function getTrack(submission, device) {
             AlbumId: albumId
           }).fetch().then(function(track) {
             redis.set('musicpicker.submissions.' + submission.Artist + '.' + submission.Album + '.' + submission.Title, track.id);
+            if (config.has('redis.cache.expire')) {
+              redis.expire('musicpicker.submissions.' + submission.Artist + '.' + submission.Album + '.' + submission.Title, config.get('redis.cache.expire'));
+            }
+
             redis.hset('musicpicker.devicetracks.' + device.id + '.' + track.id, 'trackId', track.id);
             redis.hset('musicpicker.devicetracks.' + device.id + '.' + track.id, 'deviceTrackId', submission.Id);
             redis.hset('musicpicker.devicetracks.' + device.id + '.' + track.id, 'duration', submission.Duration);
@@ -167,6 +189,10 @@ function getTrack(submission, device) {
               Number: submission.Number
             }).save().then(function(track) {
               redis.set('musicpicker.submissions.' + submission.Artist + '.' + submission.Album + '.' + submission.Title, track.id);
+              if (config.has('redis.cache.expire')) {
+                redis.expire('musicpicker.submissions.' + submission.Artist + '.' + submission.Album + '.' + submission.Title, config.get('redis.cache.expire'));
+              }
+
               redis.hset('musicpicker.devicetracks.' + device.id + '.' + track.id, 'trackId', track.id);
               redis.hset('musicpicker.devicetracks.' + device.id + '.' + track.id, 'deviceTrackId', submission.Id);
               redis.hset('musicpicker.devicetracks.' + device.id + '.' + track.id, 'duration', submission.Duration);
@@ -177,6 +203,10 @@ function getTrack(submission, device) {
           });
         }
         else {
+          if (config.has('redis.cache.expire')) {
+            redis.expire('musicpicker.submissions.' + submission.Artist + '.' + submission.Album + '.' + submission.Title, config.get('redis.cache.expire'));
+          }
+
           redis.hset('musicpicker.devicetracks.' + device.id + '.' + reply, 'trackId', reply);
           redis.hset('musicpicker.devicetracks.' + device.id + '.' + reply, 'deviceTrackId', submission.Id);
           redis.hset('musicpicker.devicetracks.' + device.id + '.' + reply, 'duration', submission.Duration);

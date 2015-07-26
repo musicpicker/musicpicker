@@ -6,7 +6,10 @@
     }
   },
   "redis": {
-    "host": "localhost"
+    "host": "localhost",
+    "cache": {
+      "expire": 1800
+    }
   },
   "statsd": {
   	"host": "localhost",
