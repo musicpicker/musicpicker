@@ -38,10 +38,6 @@ var actions = {
 
     receiveSubmissionState: function(state) {
       this.dispatch('DEVICE_SUBMISSION', state);
-    },
-
-    timeOffset: function(offset) {
-      this.dispatch('TIME_OFFSET', offset);
     }
 };
 
@@ -68,8 +64,7 @@ var DeviceStateStore = Fluxxor.createStore({
         'SEND_QUEUE': 'sendQueue',
         'PLAYER_PAUSE': 'sendPause',
         'PLAYER_PLAY': 'sendPlay',
-        'PLAYER_NEXT': 'sendNext',
-        'TIME_OFFSET': 'setOffset'
+        'PLAYER_NEXT': 'sendNext'
     },
 
     receiveDeviceState: function(deviceState) {
@@ -85,26 +80,25 @@ var DeviceStateStore = Fluxxor.createStore({
         this.emit('change');
     },
 
-    setOffset: function(offset) {
-      this.offset = offset;
-    },
-
     updatePosition: function(deviceState) {
-       if (this.cancelInterval !== null) {
+      socket.on('Clock', function(date) {
+        if (this.cancelInterval !== null) {
           clearInterval(this.cancelInterval);
           this.cancelInterval = null;
-       }
-      if (!this.paused && this.playing) {
-          this.position = (this.offset + deviceState.Position + (Date.now() - deviceState.FromTime));
-          this.cancelInterval = setInterval(function() {
-            this.position += 1000;
-            this.emit('change');
-          }.bind(this), 1000);
-      }
-      else {
-        this.position = this.offset + deviceState.Position;
-        this.emit('change');
-      }
+         }
+        if (!this.paused && this.playing) {
+            this.position = (this.offset + deviceState.Position + (Date.now() - deviceState.FromTime));
+            this.cancelInterval = setInterval(function() {
+              this.position += 1000;
+              this.emit('change');
+            }.bind(this), 1000);
+        }
+        else {
+          this.position = deviceState.Position;
+          this.emit('change');
+        }
+      }.bind(this));
+      socket.emit('Clock', Date.now());
     },
 
     receiveDeviceSubmission: function(state) {
@@ -159,10 +153,6 @@ var AuthStore = Fluxxor.createStore({
             socket.emit('RegisterClient', {DeviceId: this.device});
             socket.on('ClientRegistered', function() {
               socket.emit('GetState', this.device);
-              socket.on('Clock', function(date) {
-                flux.actions.timeOffset(- (Date.now() - date));
-              })
-              socket.emit('Clock', Date.now());
             }.bind(this));
 
             socket.on('Submission', function(state) {
