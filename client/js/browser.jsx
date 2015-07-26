@@ -1,11 +1,11 @@
 var CollectionView = React.createClass({
-    mixins: [FluxMixin, StoreWatchMixin('CollectionStore')],
+    mixins: [FluxMixin, StoreWatchMixin('CollectionStore', 'AuthStore')],
 
     getStateFromFlux: function() {
         var flux = this.getFlux();
         return {
             view: flux.store('CollectionStore').view,
-            device: flux.store('CollectionStore').device,
+            device: flux.store('AuthStore').device,
             artist: flux.store('CollectionStore').artist,
             album: flux.store('CollectionStore').album
         }

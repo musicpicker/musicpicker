@@ -60,14 +60,11 @@ var actions = {
 };
 
 var CollectionStore = Fluxxor.createStore({
-    device: null,
-    bearer: null,
     artist: null,
     album: null,
     view: null,
 
     actions: {
-        'DEVICE_START': 'startDevice',
         'SHOW_ALBUMS_BY_ARTIST': 'showAlbumsByArtist',
         'SHOW_TRACKS_BY_ALBUM': 'showTracksByAlbum',
         'SHOW_ARTISTS': 'showArtists',
@@ -78,11 +75,6 @@ var CollectionStore = Fluxxor.createStore({
 
     initialize: function() {
         this.showArtists();
-    },
-
-    startDevice: function(payload) {
-        this.device = payload.device;
-        this.bearer = payload.bearer;
     },
 
     showArtists: function() {

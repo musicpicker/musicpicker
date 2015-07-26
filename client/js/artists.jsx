@@ -37,7 +37,7 @@ var ArtistsView = React.createClass({
     componentDidMount: function() {
         jQuery.ajax("/api/Artists?device=" + this.props.device, {
             headers: {
-                'Authorization': 'Bearer ' + this.getFlux().store('CollectionStore').bearer
+                'Authorization': 'Bearer ' + this.getFlux().store('AuthStore').bearer
             }
         }).done(function(data) {
             this.setState({artists: data});

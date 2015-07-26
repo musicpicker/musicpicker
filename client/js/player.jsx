@@ -20,7 +20,7 @@ var TrackInfo = React.createClass({
 
         var options = {
             headers: {
-                'Authorization': 'Bearer ' + this.getFlux().store('DeviceStateStore').bearer
+                'Authorization': 'Bearer ' + this.getFlux().store('AuthStore').bearer
             }
         };
 
