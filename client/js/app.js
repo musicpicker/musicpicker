@@ -129,9 +129,6 @@ var CollectionStore = Fluxxor.createStore({
 });
 
 var DeviceStateStore = Fluxxor.createStore({
-    device: null,
-    bearer: null,
-
     connected: false,
     playing: false,
     current: null,
@@ -145,35 +142,10 @@ var DeviceStateStore = Fluxxor.createStore({
     actions: {
         'DEVICE_STATE': 'receiveDeviceState',
         'DEVICE_SUBMISSION': 'receiveDeviceSubmission',
-        'DEVICE_START': 'startDevice',
         'SEND_QUEUE': 'sendQueue',
         'PLAYER_PAUSE': 'sendPause',
         'PLAYER_PLAY': 'sendPlay',
         'PLAYER_NEXT': 'sendNext'
-    },
-
-    startDevice: function(payload) {
-        this.device = payload.device;
-        this.bearer = payload.bearer;
-
-        window.socket = io(window.location.origin);
-        socket.on('connect', function() {
-          socket.emit('authentication', this.bearer);
-          socket.on('authenticated', function() {
-            socket.on('SetState', function(state) {
-              flux.actions.receiveDeviceState(state);
-            });
-
-            window.socket.emit('RegisterClient', {DeviceId: this.device});
-            socket.on('ClientRegistered', function() {
-              window.socket.emit('GetState', this.device);
-            }.bind(this));
-
-            socket.on('Submission', function(state) {
-              flux.actions.receiveSubmissionState(state);
-            });
-          }.bind(this));
-        }.bind(this));
     },
 
     receiveDeviceState: function(deviceState) {
@@ -195,25 +167,24 @@ var DeviceStateStore = Fluxxor.createStore({
 
     sendQueue: function(trackIds) {
         console.log(trackIds);
-        window.socket.emit('Queue', {DeviceId: this.device, TrackIds: trackIds});
+        window.socket.emit('Queue', {DeviceId: flux.store('AuthStore').device, TrackIds: trackIds});
     },
 
     sendPause: function() {
-      window.socket.emit('Pause', {DeviceId: this.device});
+      window.socket.emit('Pause', {DeviceId: flux.store('AuthStore').device});
     },
 
     sendPlay: function() {
-      window.socket.emit('Play', {DeviceId: this.device});
+      window.socket.emit('Play', {DeviceId: flux.store('AuthStore').device});
     },
 
     sendNext: function() {
-      window.socket.emit('RequestNext', {DeviceId: this.device});
+      window.socket.emit('RequestNext', {DeviceId: flux.store('AuthStore').device});
     }
 });
 
 var AuthStore = Fluxxor.createStore({
     bearer: null,
-    devices: [],
     device: null,
 
     actions: {
@@ -228,6 +199,26 @@ var AuthStore = Fluxxor.createStore({
 
     startDevice: function(payload) {
         this.device = payload.device;
+
+        window.socket = io(window.location.origin);
+        socket.on('connect', function() {
+          socket.emit('authentication', this.bearer);
+          socket.on('authenticated', function() {
+            socket.on('SetState', function(state) {
+              flux.actions.receiveDeviceState(state);
+            });
+
+            window.socket.emit('RegisterClient', {DeviceId: this.device});
+            socket.on('ClientRegistered', function() {
+              window.socket.emit('GetState', this.device);
+            }.bind(this));
+
+            socket.on('Submission', function(state) {
+              flux.actions.receiveSubmissionState(state);
+            });
+          }.bind(this));
+        }.bind(this));
+        
         this.emit('change');
     }
 });
