@@ -327,6 +327,10 @@ function hub(io, clientId, socket) {
       })
     });
   });
+
+  socket.on('Clock', function(clientDate) {
+    socket.emit('Clock', Date.now());
+  })
 }
 
 function authenticate(token, callback) {
