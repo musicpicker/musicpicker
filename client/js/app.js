@@ -160,7 +160,7 @@ var AuthStore = Fluxxor.createStore({
             socket.on('ClientRegistered', function() {
               socket.emit('GetState', this.device);
               socket.on('Clock', function(date) {
-                flux.actions.timeOffset(Date.now() - date);
+                flux.actions.timeOffset(- (Date.now() - date));
               })
               socket.emit('Clock', Date.now());
             }.bind(this));
