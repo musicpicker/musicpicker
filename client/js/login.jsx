@@ -8,7 +8,7 @@ var Login = React.createClass({
 	          <div className="panel-body">
 	            <h3 className="text-center">Musicpicker</h3><br />
 							<p className="text-center">
-	              <span style={{fontSize: '3em'}} className="glyphicon glyphicon-cd"></span><br />
+	              <span style={{fontSize: '3em'}} className="glyphicon glyphicon-log-in"></span><br />
 	              <b>Authenticating</b><br />
 	              Please wait while we get you logged in
 	            </p>
