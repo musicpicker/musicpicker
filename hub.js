@@ -24,6 +24,8 @@ function createDeviceState(deviceId) {
       Duration: tredis.get('musichub.device.' + deviceId + '.duration'),
       Playing: tredis.get('musichub.device.' + deviceId + '.playing'),
       Paused: tredis.get('musichub.device.' + deviceId + '.paused'),
+      FromTime: tredis.get('musichub.device.' + deviceId + '.fromtime'),
+      Position: tredis.get('musichub.device.' + deviceId + '.position'),
       Queue: tredis.lrange('musichub.device.' + deviceId + '.queue', 0, -1)
     }).then(function(result) {
       resolve({
@@ -32,6 +34,8 @@ function createDeviceState(deviceId) {
         Duration: parseInt(result.Duration),
         Playing: Boolean(parseInt(result.Playing)),
         Paused: Boolean(parseInt(result.Paused)),
+        FromTime: parseInt(result.FromTime),
+        Position: parseInt(result.Position),
         Queue: result.Queue.map(function(item) {
           return parseInt(item);
         })
@@ -101,6 +105,19 @@ function updateState(deviceId) {
   });
 }
 
+function updatePosition(deviceId) {
+  return new Promise(function(resolve, reject) {
+    tredis.get('musichub.device.' + deviceId + '.position').then(function(currentPosition) {
+      tredis.get('musichub.device.' + deviceId + '.fromtime').then(function(fromTime) {
+        var newPosition = parseInt(currentPosition) + (Date.now() - parseInt(fromTime));
+        tredis.set('musichub.device.' + deviceId + '.position', newPosition).then(function() {
+          resolve();
+        });
+      });
+    });
+  });
+}
+
 function addTrackToQueue(deviceId, trackId) {
   return new Promise(function(resolve, reject) {
     new models.DeviceTrack({
@@ -136,15 +153,21 @@ function play(io, socket, deviceId, fromNext) {
         if (fromNext) {
           io.sockets.to(deviceClientId).emit('Stop');
           updateState(deviceId).then(function(currentDeviceTrack) {
-            io.sockets.to(deviceClientId).emit('SetTrackId', currentDeviceTrack);
-            io.sockets.to(deviceClientId).emit('Play');
-            sendClientState(io, socket, deviceId);
+            tredis.set('musichub.device.' + deviceId + '.fromtime', Date.now()).then(function() {
+              tredis.set('musichub.device.' + deviceId + '.position', 0).then(function() {
+                io.sockets.to(deviceClientId).emit('SetTrackId', currentDeviceTrack);
+                io.sockets.to(deviceClientId).emit('Play');
+                sendClientState(io, socket, deviceId);
+              });
+            });
           });
         }
         else {
           tredis.set('musichub.device.' + deviceId + '.paused', 0).then(function() {
-            io.sockets.to(deviceClientId).emit('Play');
-            sendClientState(io, socket, deviceId);
+            tredis.set('musichub.device.' + deviceId + '.fromtime', Date.now()).then(function() {
+              io.sockets.to(deviceClientId).emit('Play');
+              sendClientState(io, socket, deviceId);
+            });
           });
         }
       }
@@ -160,6 +183,8 @@ function onDisconnect(io, socket, clientId) {
         tredis.del('musichub.device.' + deviceId + '.duration'),
         tredis.del('musichub.device.' + deviceId + '.playing'),
         tredis.del('musichub.device.' + deviceId + '.paused'),
+        tredis.del('musichub.device.' + deviceId + '.fromtime'),
+        tredis.del('musichub.device.' + deviceId + '.position'),
         tredis.del('musichub.device.' + deviceId + '.queue'),
         tredis.del('musichub.device.' + deviceId + '.queue.device'),
         tredis.del('musichub.device.' + deviceId + '.connection'),
@@ -275,7 +300,8 @@ function hub(io, clientId, socket) {
       var deviceId = data.DeviceId;
       Promise.all([
         tredis.set('musichub.device.' + deviceId + '.playing', 0),
-        tredis.set('musichub.device.' + deviceId + '.paused', 1)
+        tredis.set('musichub.device.' + deviceId + '.paused', 1),
+        updatePosition(deviceId)
       ]).then(function() {
         sendClientState(io, socket, deviceId);
         tredis.get('musichub.device.' + deviceId + '.connection').then(function(deviceClientId) {

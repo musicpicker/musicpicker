@@ -44,13 +44,18 @@ var actions = {
 var DeviceStateStore = Fluxxor.createStore({
     connected: false,
     playing: false,
+    paused: true,
     current: null,
     duration: 0,
+    position: 0,
+    fromTime: null,
     lastPause: null,
     queue: [],
 
     submission_processing: false,
     submission_progress: 0,
+
+    cancelInterval: null,
 
     actions: {
         'DEVICE_STATE': 'receiveDeviceState',
@@ -64,12 +69,32 @@ var DeviceStateStore = Fluxxor.createStore({
     receiveDeviceState: function(deviceState) {
         this.connected = deviceState.Connected;
         this.playing = deviceState.Playing;
+        this.paused = deviceState.Paused;
         this.current = deviceState.Current;
         this.duration = deviceState.Duration;
         this.lastPause = deviceState.LastPause;
         this.queue = deviceState.Queue;
         console.log(deviceState);
+        this.updatePosition(deviceState);
         this.emit('change');
+    },
+
+    updatePosition: function(deviceState) {
+      if (!this.paused && this.playing) {
+          this.position = (deviceState.Position + (Date.now() - deviceState.FromTime));
+          this.cancelInterval = setInterval(function() {
+            this.position += 1000;
+            this.emit('change');
+          }.bind(this), 1000);
+      }
+      else {
+        if (this.cancelInterval !== null) {
+          clearInterval(this.cancelInterval);
+          this.cancelInterval = null;
+        }
+        this.position = deviceState.Position;
+        this.emit('change');
+      }
     },
 
     receiveDeviceSubmission: function(state) {
