@@ -82,15 +82,19 @@ var PlayerPosition = React.createClass({
 	},
 
 	render: function() {
-		var percent = (this.state.position * 100) / (this.props.duration * 1000);
+		var position = this.state.position;
+		if (position < 0) {
+			position = 0;
+		}
+		var percent = (position * 100) / (this.props.duration * 1000);
 		return (
 			<div className="row">
 				<div className="col-sm-2">
-					{moment(this.state.position).format('m:ss')}
+					{moment(position).format('m:ss')}
 				</div>
 				<div className="col-sm-8">
 					<div className="progress">
-		        <div className="progress-bar progress-bar-success" role="progressbar" aria-valuenow={this.state.position} aria-valuemin="0" aria-valuemax={this.props.duration} style={{width: percent + '%'}}>
+		        <div className="progress-bar progress-bar-success" role="progressbar" aria-valuenow={position} aria-valuemin="0" aria-valuemax={this.props.duration} style={{width: percent + '%'}}>
 		        </div>
 		      </div>
 				</div>

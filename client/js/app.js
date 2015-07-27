@@ -80,6 +80,10 @@ var DeviceStateStore = Fluxxor.createStore({
     },
 
     updatePosition: function(deviceState) {
+       if (this.cancelInterval !== null) {
+          clearInterval(this.cancelInterval);
+          this.cancelInterval = null;
+       }
       if (!this.paused && this.playing) {
           this.position = (deviceState.Position + (Date.now() - deviceState.FromTime));
           this.cancelInterval = setInterval(function() {
@@ -88,10 +92,6 @@ var DeviceStateStore = Fluxxor.createStore({
           }.bind(this), 1000);
       }
       else {
-        if (this.cancelInterval !== null) {
-          clearInterval(this.cancelInterval);
-          this.cancelInterval = null;
-        }
         this.position = deviceState.Position;
         this.emit('change');
       }
