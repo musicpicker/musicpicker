@@ -82,6 +82,7 @@ var DeviceStateStore = Fluxxor.createStore({
 
     updatePosition: function(deviceState) {
       socket.on('Clock', function(date) {
+        this.offset = - (Date.now() - date);
         if (this.cancelInterval !== null) {
           clearInterval(this.cancelInterval);
           this.cancelInterval = null;
