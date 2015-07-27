@@ -35,7 +35,7 @@ app.use(logger('dev'));
 app.use(bodyParser.json({limit: '10mb'}));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use('/static', express.static(path.join(__dirname, 'static')));
 
 app.use(cookieSession({
   'name': 'session',
@@ -44,14 +44,14 @@ app.use(cookieSession({
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.get('/', statsd('home'),
-  function(req, res) {
-  res.render('home');
-});
-
 app.use('/', account);
 app.use('/oauth', auth);
 app.use('/api/devices', devices);
 app.use('/api', metadata);
+
+app.get('*', statsd('home'),
+  function(req, res) {
+  res.render('home');
+});
 
 module.exports = app;

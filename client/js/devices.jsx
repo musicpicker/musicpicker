@@ -1,9 +1,8 @@
 var DeviceItem = React.createClass({
-    mixins: [FluxMixin],
+    mixins: [Navigation],
 
     select: function() {
-        var flux = this.getFlux();
-        flux.actions.startDevice(this.props.data.Id, flux.store('AuthStore').bearer);
+        this.transitionTo('device', {id: this.props.data.Id});
     },
 
     render: function() {
@@ -16,8 +15,8 @@ var DeviceItem = React.createClass({
 });
 
 var Devices = React.createClass({
-	mixins: [FluxMixin],
-
+  mixins: [FluxMixin],
+  
 	getInitialState: function() {
 		return {
 			devices: null

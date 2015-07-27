@@ -15,26 +15,26 @@ gulp.task('app', function() {
     .pipe(react())
     .pipe(concat('app.js'))
     .pipe(uglify())
-    .pipe(gulp.dest('public/'));
+    .pipe(gulp.dest('static/'));
 });
 
 gulp.task('vendor', ['bower'], function() {
   return gulp.src(mainBowerFiles('**/*.js'))
     .pipe(concat('vendor.js'))
     .pipe(uglify())
-    .pipe(gulp.dest('public/'));
+    .pipe(gulp.dest('static/'));
 });
 
 gulp.task('styles', ['bower', 'fonts'], function() {
   return gulp.src('client/styles.less')
     .pipe(less())
     .pipe(minifyCss())
-    .pipe(gulp.dest('public/'));
+    .pipe(gulp.dest('static/'));
 });
 
 gulp.task('fonts', ['bower'], function() {
   return gulp.src(mainBowerFiles('**/fonts/**'))
-    .pipe(gulp.dest('public/fonts'));
+    .pipe(gulp.dest('static/fonts'));
 });
 
 gulp.task('bower', function() {

@@ -1,5 +1,5 @@
 var ArtistItem = React.createClass({
-    mixins: [FluxMixin],
+    mixins: [FluxMixin, Navigation],
 
     getDefaultProps: function() {
         return {
@@ -9,7 +9,7 @@ var ArtistItem = React.createClass({
     },
 
     select: function() {
-        this.getFlux().actions.showAlbumsByArtist(this.props.id);
+        this.transitionTo('artist', {id: this.getFlux().store('AuthStore').device, artistId: this.props.id});
     },
 
     render: function() {
@@ -22,12 +22,6 @@ var ArtistItem = React.createClass({
 var ArtistsView = React.createClass({
     mixins: [FluxMixin],
 
-    getDefaultProps: function() {
-        return {
-            device: null
-        };
-    },
-
     getInitialState: function() {
         return {
             artists: []
@@ -35,7 +29,7 @@ var ArtistsView = React.createClass({
     },
 
     componentDidMount: function() {
-        jQuery.ajax("/api/Artists?device=" + this.props.device, {
+        jQuery.ajax("/api/Artists?device=" + this.getFlux().store('AuthStore').device, {
             headers: {
                 'Authorization': 'Bearer ' + this.getFlux().store('AuthStore').bearer
             }

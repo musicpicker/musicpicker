@@ -1,5 +1,5 @@
 var AlbumItem = React.createClass({
-    mixins: [FluxMixin],
+    mixins: [FluxMixin, Navigation],
 
     getDefaultProps: function() {
         return {
@@ -9,7 +9,7 @@ var AlbumItem = React.createClass({
     },
 
     select: function() {
-        this.getFlux().actions.showTracksByAlbum(this.props.id);
+        this.transitionTo('album', {id: this.getFlux().store('AuthStore').device, albumId: this.props.id});
     },
 
     render: function() {
@@ -22,13 +22,6 @@ var AlbumItem = React.createClass({
 var AlbumsView = React.createClass({
     mixins: [FluxMixin],
 
-    getDefaultProps: function() {
-        return {
-            device: null,
-            artist: null
-        };
-    },
-
     getInitialState: function() {
         return {
             albums: []
@@ -36,11 +29,11 @@ var AlbumsView = React.createClass({
     },
 
     componentDidMount: function() {
-        if (this.props.artist === null) {
-            var url = "/api/Albums?device=" + this.props.device;
+        if (this.props.params.artistId === undefined) {
+            var url = "/api/Albums?device=" + this.getFlux().store('AuthStore').device;
         }
         else {
-            var url = "/api/Albums?device=" + this.props.device + "&artist=" + this.props.artist;
+            var url = "/api/Albums?device=" + this.getFlux().store('AuthStore').device + "&artist=" + this.props.params.artistId;
         }
 
         jQuery.ajax(url, {
@@ -57,13 +50,8 @@ var AlbumsView = React.createClass({
     },
 
     render: function() {
-        var back;
-        if (this.props.artist !== null) {
-            back = <button onClick={this.back} type="button" className="list-group-item active">Back</button>;
-        }
         return (
             <div className="list-group">
-                {back}
                 {this.state.albums.map(function(album) {
                     return(
                         <AlbumItem key={album.Id} id={album.Id} name={album.Name} />

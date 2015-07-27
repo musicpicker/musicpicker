@@ -1,31 +1,13 @@
 var FluxMixin = Fluxxor.FluxMixin(React);
 var StoreWatchMixin = Fluxxor.StoreWatchMixin;
 
+var RouteHandler = ReactRouter.RouteHandler;
+var Route = ReactRouter.Route;
+var DefaultRoute = ReactRouter.DefaultRoute;
+var Navigation = ReactRouter.Navigation;
+var Link = ReactRouter.Link;
+
 var actions = {
-    showAlbumsByArtist: function(artist) {
-        this.dispatch('SHOW_ALBUMS_BY_ARTIST', artist);
-    },
-
-    showTracksByAlbum: function(album) {
-        this.dispatch('SHOW_TRACKS_BY_ALBUM', album);
-    },
-
-    back: function() {
-        this.dispatch('BACK');
-    },
-
-    showArtists: function() {
-        this.dispatch('SHOW_ARTISTS');
-    },
-
-    showAlbums: function() {
-        this.dispatch('SHOW_ALBUMS');
-    },
-
-    showTracks: function() {
-        this.dispatch('SHOW_TRACKS');
-    },
-
     receiveDeviceState: function(deviceState) {
         this.dispatch('DEVICE_STATE', deviceState);
     },
@@ -58,75 +40,6 @@ var actions = {
       this.dispatch('DEVICE_SUBMISSION', state);
     }
 };
-
-var CollectionStore = Fluxxor.createStore({
-    artist: null,
-    album: null,
-    view: null,
-
-    actions: {
-        'SHOW_ALBUMS_BY_ARTIST': 'showAlbumsByArtist',
-        'SHOW_TRACKS_BY_ALBUM': 'showTracksByAlbum',
-        'SHOW_ARTISTS': 'showArtists',
-        'SHOW_ALBUMS': 'showAlbums',
-        'SHOW_TRACKS': 'showTracks',
-        'BACK': 'back'
-    },
-
-    initialize: function() {
-        this.showArtists();
-    },
-
-    showArtists: function() {
-        this.view = 'artists';
-        this.artist = null;
-        this.album = null;
-        this.emit('change');
-    },
-
-    showAlbums: function() {
-        this.view = 'albums';
-        this.artist = null;
-        this.album = null;
-        this.emit('change');
-    },
-
-    showTracks: function() {
-        this.view = 'tracks';
-        this.artist = null;
-        this.album = null;
-        this.emit('change');
-    },
-
-    showAlbumsByArtist: function(artist) {
-        this.view = 'albums';
-        this.artist = artist;
-        this.album = null;
-        this.emit('change');
-    },
-
-    showTracksByAlbum: function(album) {
-        this.view = 'tracks';
-        this.album = album;
-        this.emit('change');
-    },
-
-    back: function() {
-        if (this.album !== null) {
-            this.view = 'albums';
-            this.album = null;
-            this.emit('change');
-            return;
-        }
-
-        if (this.artist !== null) {
-            this.view = 'artists'
-            this.artist = null;
-            this.emit('change');
-            return;
-        }
-    }
-});
 
 var DeviceStateStore = Fluxxor.createStore({
     connected: false,
@@ -224,7 +137,6 @@ var AuthStore = Fluxxor.createStore({
 });
 
 var flux = new Fluxxor.Flux({
-    CollectionStore: new CollectionStore(),
     DeviceStateStore: new DeviceStateStore(),
     AuthStore: new AuthStore()
 }, actions);

@@ -1,13 +1,6 @@
 var TracksView = React.createClass({
     mixins: [FluxMixin],
 
-    getDefaultProps: function() {
-        return {
-            device: null,
-            album: null
-        };
-    },
-
     getInitialState: function() {
         return {
             tracks: []
@@ -15,11 +8,11 @@ var TracksView = React.createClass({
     },
 
     componentDidMount: function() {
-        if (this.props.album === null) {
-            var url = "/api/Tracks?device=" + this.props.device;
+        if (this.props.params.albumId === undefined) {
+            var url = "/api/Tracks?device=" + this.getFlux().store('AuthStore').device;
         }
         else {
-            var url = "/api/Tracks?device=" + this.props.device + "&album=" + this.props.album;
+            var url = "/api/Tracks?device=" + this.getFlux().store('AuthStore').device + "&album=" + this.props.params.albumId;
         }
 
         jQuery.ajax(url, {
@@ -52,7 +45,6 @@ var TracksView = React.createClass({
     render: function() {
         return (
             <div className="list-group">
-                <button onClick={this.back} type="button" className="list-group-item active">Back</button>
                 {this.state.tracks.map(function(track, index) {
                     return(
                         <button key={index} onClick={this.select.bind(this, index)} type="button" className="list-group-item">{track.Name}</button>
