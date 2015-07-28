@@ -18,13 +18,25 @@ var TrackInfo = React.createClass({
 			return;
 		}
 
+		if (props.id === this.props.id) {
+			return;
+		}
+
+		this.getMeta(props.id);
+	},
+
+	componentDidMount: function() {
+		this.getMeta(this.props.id);
+	},
+
+	getMeta: function(trackId) {
 		var options = {
 			headers: {
 				'Authorization': 'Bearer ' + this.getFlux().store('AuthStore').bearer
 			}
 		};
 
-		jQuery.ajax('/api/Tracks/' + props.id, options).done(function(track) {
+		jQuery.ajax('/api/Tracks/' + trackId, options).done(function(track) {
 			this.setState({title: track.Name});
 			jQuery.ajax('/api/Albums/' + track.AlbumId, options).done(function(album) {
 				this.setState({image: album.Artwork});
