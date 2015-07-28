@@ -9,7 +9,7 @@ var ArtistItem = React.createClass({
     },
 
     select: function() {
-        this.transitionTo('artist', {id: this.getFlux().store('AuthStore').device, artistId: this.props.id});
+        this.transitionTo('artist', {id: this.props.deviceId, artistId: this.props.id});
     },
 
     render: function() {
@@ -29,7 +29,7 @@ var ArtistsView = React.createClass({
     },
 
     componentDidMount: function() {
-        jQuery.ajax("/api/Artists?device=" + this.getFlux().store('AuthStore').device, {
+        jQuery.ajax("/api/Artists?device=" + this.props.params.id, {
             headers: {
                 'Authorization': 'Bearer ' + this.getFlux().store('AuthStore').bearer
             }
@@ -43,7 +43,7 @@ var ArtistsView = React.createClass({
             <div className="list-group">
                 {this.state.artists.map(function(artist) {
                     return(
-                        <ArtistItem key={artist.Id} id={artist.Id} name={artist.Name} />
+                        <ArtistItem key={artist.Id} id={artist.Id} name={artist.Name} deviceId={this.props.params.id} />
                     )
                 }.bind(this))}
             </div>

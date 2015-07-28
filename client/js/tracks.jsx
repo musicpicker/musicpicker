@@ -9,10 +9,10 @@ var TracksView = React.createClass({
 
     componentDidMount: function() {
         if (this.props.params.albumId === undefined) {
-            var url = "/api/Tracks?device=" + this.getFlux().store('AuthStore').device;
+            var url = "/api/Tracks?device=" + this.props.params.id;
         }
         else {
-            var url = "/api/Tracks?device=" + this.getFlux().store('AuthStore').device + "&album=" + this.props.params.albumId;
+            var url = "/api/Tracks?device=" + this.props.params.id + "&album=" + this.props.params.albumId;
         }
 
         jQuery.ajax(url, {
@@ -39,7 +39,7 @@ var TracksView = React.createClass({
         var trackIds = tracks.map(function(track) {
             return track.Id;
         });
-        this.getFlux().actions.queue(trackIds);
+        this.getFlux().actions.queue(this.props.params.id, trackIds);
     },
 
     render: function() {

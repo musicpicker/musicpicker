@@ -9,7 +9,7 @@ var AlbumItem = React.createClass({
     },
 
     select: function() {
-        this.transitionTo('album', {id: this.getFlux().store('AuthStore').device, albumId: this.props.id});
+        this.transitionTo('album', {id: this.props.deviceId, albumId: this.props.id});
     },
 
     render: function() {
@@ -30,10 +30,10 @@ var AlbumsView = React.createClass({
 
     componentDidMount: function() {
         if (this.props.params.artistId === undefined) {
-            var url = "/api/Albums?device=" + this.getFlux().store('AuthStore').device;
+            var url = "/api/Albums?device=" + this.props.params.id;
         }
         else {
-            var url = "/api/Albums?device=" + this.getFlux().store('AuthStore').device + "&artist=" + this.props.params.artistId;
+            var url = "/api/Albums?device=" + this.props.params.id + "&artist=" + this.props.params.artistId;
         }
 
         jQuery.ajax(url, {
@@ -54,7 +54,7 @@ var AlbumsView = React.createClass({
             <div className="list-group">
                 {this.state.albums.map(function(album) {
                     return(
-                        <AlbumItem key={album.Id} id={album.Id} name={album.Name} />
+                        <AlbumItem key={album.Id} id={album.Id} name={album.Name} deviceId={this.props.params.id} />
                     )
                 }.bind(this))}
             </div>

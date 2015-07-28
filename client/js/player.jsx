@@ -80,23 +80,19 @@ var TrackInfo = React.createClass({
 var PlayerPosition = React.createClass({
 	mixins: [FluxMixin, StoreWatchMixin('DeviceStateStore')],
 
-	getDefaultProps: function() {
-		return {
-			duration: null
-		}
-	},
-
 	getStateFromFlux: function() {
 		var flux = this.getFlux();
-		var deviceId = flux.store('AuthStore').device;
+		var deviceId = this.props.deviceId;
 		if (flux.store('DeviceStateStore').devices[deviceId] !== undefined) {
 			return {
-				position: flux.store('DeviceStateStore').devices[deviceId].position
+				position: flux.store('DeviceStateStore').devices[deviceId].position,
+				duration: flux.store('DeviceStateStore').devices[deviceId].duration
 			};
 		}
 		else {
 			return {
-				position: 0
+				position: 0,
+				duration: null
 			}
 		}
 	},
@@ -106,7 +102,7 @@ var PlayerPosition = React.createClass({
 		if (position < 0 || position === null) {
 			position = 0;
 		}
-		var percent = (position * 100) / (this.props.duration * 1000);
+		var percent = (position * 100) / (this.state.duration * 1000);
 		return (
 			<div className="row">
 				<div className="col-sm-2">
@@ -114,12 +110,12 @@ var PlayerPosition = React.createClass({
 				</div>
 				<div className="col-sm-8">
 					<div className="progress">
-		        <div className="progress-bar progress-bar-success" role="progressbar" aria-valuenow={position} aria-valuemin="0" aria-valuemax={this.props.duration} style={{width: percent + '%'}}>
+		        <div className="progress-bar progress-bar-success" role="progressbar" aria-valuenow={position} aria-valuemin="0" aria-valuemax={this.state.duration} style={{width: percent + '%'}}>
 		        </div>
 		      </div>
 				</div>
       	<div className="col-sm-2">
-      		{moment(this.props.duration * 1000).format('m:ss')}
+      		{moment(this.state.duration * 1000).format('m:ss')}
       	</div>
       </div>
 		)
@@ -131,7 +127,7 @@ var Player = React.createClass({
 
 	getStateFromFlux: function() {
 		var flux = this.getFlux();
-		var deviceId = flux.store('AuthStore').device;
+		var deviceId = this.props.deviceId;
 		if (flux.store('DeviceStateStore').devices[deviceId] !== undefined) {
 			return {
 				connected: flux.store('DeviceStateStore').devices[deviceId].connected,
@@ -151,15 +147,15 @@ var Player = React.createClass({
 	},
 
 	pause: function() {
-		this.getFlux().actions.pause();
+		this.getFlux().actions.pause(this.props.deviceId);
 	},
 
 	play: function() {
-		this.getFlux().actions.play();
+		this.getFlux().actions.play(this.props.deviceId);
 	},
 
 	next: function() {
-		this.getFlux().actions.next();
+		this.getFlux().actions.next(this.props.deviceId);
 	},
 
 	render: function() {
@@ -175,7 +171,7 @@ var Player = React.createClass({
 				   <div className="panel-heading">Now playing</div>
 				   <div className="panel-body">
 					   <TrackInfo id={this.state.current} />
-					   <PlayerPosition duration={this.state.duration} />
+					   <PlayerPosition deviceId={this.props.deviceId} />
 					   <div className="text-center">
 						   <div className="btn-group" role="group">
 							   {pause}

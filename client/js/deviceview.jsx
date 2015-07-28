@@ -3,7 +3,7 @@ var DeviceView = React.createClass({
 
     getStateFromFlux: function() {
       var flux = this.getFlux();
-      var deviceId = flux.store('AuthStore').device;
+      var deviceId = this.props.params.id;
       if (flux.store('DeviceStateStore').submissions[deviceId] !== undefined) {
         return {
           submission_processing: flux.store('DeviceStateStore').submissions[deviceId].processing,
@@ -41,7 +41,7 @@ var DeviceView = React.createClass({
               <div>
                 <h4>Processing your music collection</h4>
                 <p>Please wait while we import your device's music library.</p>
-                <Submission />
+                <Submission deviceId={this.props.params.id} />
               </div>
             );
           }
@@ -54,8 +54,8 @@ var DeviceView = React.createClass({
             </div>
             <div className="row">
                 <div className="col-md-4 col-md-push-8">
-                    <Connection />
-                    <Player />
+                    <Connection deviceId={this.props.params.id} />
+                    <Player deviceId={this.props.params.id} />
                 </div>
                 <div className="col-md-8 col-md-pull-4">
                     {browser}
