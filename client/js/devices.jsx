@@ -33,6 +33,11 @@ var Devices = React.createClass({
       }.bind(this));
 	},
 
+  logout: function() {
+    localStorage.removeItem('bearer');
+    window.location.pathname = '/logout';
+  },
+
 	render: function() {
 		var devices = (
 	    <p className="text-center">
@@ -60,7 +65,7 @@ var Devices = React.createClass({
               {devices}
 
               <div className="text-right">
-                <a href="/logout" className="btn btn-danger">Log out</a>
+                <button className="btn btn-danger" onClick={this.logout}>Log out</button>
               </div>
             </div>
           </div>

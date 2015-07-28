@@ -3,13 +3,19 @@ function mpStart(container) {
   	React.render(React.createElement(Login), $('#app')[0]);
   }
 
-  try {
-    var access_token = location.hash.split('#access_token=')[1].split('&')[0];
-    location.hash = '';
-    flux.actions.signIn(access_token);
+  if (localStorage.bearer === undefined) {
+    try {
+      var access_token = location.hash.split('#access_token=')[1].split('&')[0];
+      location.hash = '';
+      localStorage.bearer = access_token;
+      flux.actions.signIn(access_token);
+    }
+    catch (ex) {
+      window.location = location.origin + '/oauth/authorize?response_type=token&redirect_uri=' + location.href
+    }
   }
-  catch (ex) {
-    window.location = location.origin + '/oauth/authorize?response_type=token&redirect_uri=' + location.href
+  else {
+    flux.actions.signIn(localStorage.bearer);
   }
 
   var routes = (
