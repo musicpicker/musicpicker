@@ -1,5 +1,11 @@
 var DeviceView = React.createClass({
-    mixins: [FluxMixin, StoreWatchMixin('DeviceStateStore')],
+    mixins: [FluxMixin, StoreWatchMixin('DeviceStateStore'), Navigation],
+
+    getInitialState: function() {
+      return {
+        name: 'Musicpicker'
+      }
+    },
 
     getStateFromFlux: function() {
       var flux = this.getFlux();
@@ -16,6 +22,21 @@ var DeviceView = React.createClass({
           submission_progress: 0
         }
       }
+    },
+
+    componentDidMount: function() {
+      jQuery.ajax('/api/Devices/' + this.props.params.id, {
+          headers: {
+              'Authorization': 'Bearer ' + this.getFlux().store('AuthStore').bearer
+          }
+      }).done(function(data) {
+        console.log(data);
+        this.setState({name: data.Name});
+      }.bind(this));
+    },
+
+    back: function() {
+      this.transitionTo('devices');
     },
 
     render: function() {
@@ -44,7 +65,11 @@ var DeviceView = React.createClass({
           <div>   
             <div className="row">
                 <div className="col-sm-12">
-                    <h3>Musicpicker</h3>
+                    <h3>
+                      {this.state.name} 
+                      &nbsp;&nbsp;&nbsp;&nbsp;
+                      <button className="btn btn-primary" onClick={this.back}>Back to devices</button>
+                    </h3>
                 </div>
             </div>
             <div className="row">

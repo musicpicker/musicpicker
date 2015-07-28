@@ -25,7 +25,7 @@ function mpStart(container) {
 
   var routes = (
     <Route handler={View}>
-      <DefaultRoute handler={Devices}/>
+      <DefaultRoute name="devices" handler={Devices}/>
       <Route name="device" path="device/:id" handler={DeviceView}>
         <DefaultRoute name="artists" handler={ArtistsView}/>
         <Route name="albums" handler={AlbumsView}/>
