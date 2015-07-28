@@ -8,7 +8,10 @@ function mpStart(container) {
       var access_token = location.hash.split('#access_token=')[1].split('&')[0];
       location.hash = '';
       localStorage.bearer = access_token;
+
       flux.actions.signIn(access_token);
+      window.socket = io(window.location.origin);
+      flux.actions.startDevices(access_token);
     }
     catch (ex) {
       window.location = location.origin + '/oauth/authorize?response_type=token&redirect_uri=' + location.href
@@ -16,6 +19,8 @@ function mpStart(container) {
   }
   else {
     flux.actions.signIn(localStorage.bearer);
+    window.socket = io(window.location.origin);
+    flux.actions.startDevices(localStorage.bearer);
   }
 
   var routes = (

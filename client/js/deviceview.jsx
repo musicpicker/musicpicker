@@ -18,11 +18,6 @@ var DeviceView = React.createClass({
       }
     },
 
-    componentWillMount: function() {
-        var flux = this.getFlux();
-        flux.actions.startDevice(this.props.params.id, flux.store('AuthStore').bearer);
-    },
-
     render: function() {
          if (!this.state.submission_processing) {
             var browser = (

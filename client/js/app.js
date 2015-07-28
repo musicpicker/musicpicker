@@ -28,8 +28,8 @@ var actions = {
         this.dispatch('PLAYER_NEXT', deviceId);
     },
 
-    startDevice: function(deviceId, bearer) {
-        this.dispatch('DEVICE_START', {device: deviceId, bearer: bearer});
+    startDevices: function(bearer) {
+        this.dispatch('DEVICES_START', bearer);
     },
 
     signIn: function(bearer) {
@@ -122,7 +122,7 @@ var AuthStore = Fluxxor.createStore({
 
     actions: {
         'AUTH_SIGNIN': 'signIn',
-        'DEVICE_START': 'startDevice'
+        'DEVICES_START': 'startDevices'
     },
 
     signIn: function(bearer) {
@@ -130,27 +130,34 @@ var AuthStore = Fluxxor.createStore({
       this.emit('change');
     },
 
-    startDevice: function(payload) {
-        window.socket = io(window.location.origin);
-        socket.on('connect', function() {
-          socket.emit('authentication', this.bearer);
-          socket.on('authenticated', function() {
-            socket.on('SetState', function(state) {
-              flux.actions.receiveDeviceState(state);
-            });
+    startDevices: function(bearer) {
+      socket.on('connect', function() {
+        socket.emit('authentication', bearer);
+        socket.on('authenticated', function() {
+          socket.on('SetState', function(state) {
+            flux.actions.receiveDeviceState(state);
+          });
 
-            socket.emit('RegisterClient', {DeviceId: payload.device});
-            socket.on('ClientRegistered', function() {
-              socket.emit('GetState', payload.device);
+          socket.on('Submission', function(state) {
+            flux.actions.receiveSubmissionState(state);
+          });
+
+          jQuery.ajax('/api/Devices', {
+              headers: {
+                  'Authorization': 'Bearer ' + bearer
+              }
+          }).done(function(devices) {
+            devices.forEach(function(device) {
+              socket.on('ClientRegistered', function() {
+                socket.emit('GetState', device.Id);
+              }.bind(this));
+              socket.emit('RegisterClient', {DeviceId: device.Id});
             }.bind(this));
-
-            socket.on('Submission', function(state) {
-              flux.actions.receiveSubmissionState(state);
-            });
           }.bind(this));
         }.bind(this));
-        
-        this.emit('change');
+      }.bind(this));
+      
+      this.emit('change');
     }
 });
 
