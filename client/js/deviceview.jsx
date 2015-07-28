@@ -3,9 +3,18 @@ var DeviceView = React.createClass({
 
     getStateFromFlux: function() {
       var flux = this.getFlux();
-      return {
-        submission_processing: flux.store('DeviceStateStore').submission_processing,
-        submission_progress: flux.store('DeviceStateStore').submission_progress
+      var deviceId = flux.store('AuthStore').device;
+      if (flux.store('DeviceStateStore').submissions[deviceId] !== undefined) {
+        return {
+          submission_processing: flux.store('DeviceStateStore').submissions[deviceId].processing,
+          submission_progress: flux.store('DeviceStateStore').submissions[deviceId].progress
+        }
+      }
+      else {
+        return {
+          submission_processing: false,
+          submission_progress: 0
+        }
       }
     },
 

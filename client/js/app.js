@@ -42,21 +42,8 @@ var actions = {
 };
 
 var DeviceStateStore = Fluxxor.createStore({
-    connected: false,
-    playing: false,
-    paused: true,
-    current: null,
-    duration: 0,
-    position: 0,
-    fromTime: null,
-    lastPause: null,
-    queue: [],
-
-    submission_processing: false,
-    submission_progress: 0,
-
-    cancelInterval: null,
-    offset: 0,
+    devices: {},
+    submissions: {},
 
     actions: {
         'DEVICE_STATE': 'receiveDeviceState',
@@ -68,34 +55,39 @@ var DeviceStateStore = Fluxxor.createStore({
     },
 
     receiveDeviceState: function(deviceState) {
-        this.connected = deviceState.Connected;
-        this.playing = deviceState.Playing;
-        this.paused = deviceState.Paused;
-        this.current = deviceState.Current;
-        this.duration = deviceState.Duration;
-        this.lastPause = deviceState.LastPause;
-        this.queue = deviceState.Queue;
-        console.log(deviceState);
+        if (this.devices[deviceState.Device] === undefined) {
+          this.devices[deviceState.Device] = {};
+        }
+
+        this.devices[deviceState.Device].connected = deviceState.Connected;
+        this.devices[deviceState.Device].playing =  deviceState.Playing;
+        this.devices[deviceState.Device].paused = deviceState.Paused;
+        this.devices[deviceState.Device].current = deviceState.Current;
+        this.devices[deviceState.Device].duration = deviceState.Duration;
+        this.devices[deviceState.Device].queue = deviceState.Queue;
+
         this.updatePosition(deviceState);
         this.emit('change');
     },
 
     updatePosition: function(deviceState) {
+      var deviceId = deviceState.Device;
+
       socket.on('Clock', function(date) {
-        this.offset = - (Date.now() - date);
-        if (this.cancelInterval !== null) {
-          clearInterval(this.cancelInterval);
-          this.cancelInterval = null;
+        this.devices[deviceId].offset = - (Date.now() - date);
+        if (this.devices[deviceId].cancelInterval !== null) {
+          clearInterval(this.devices[deviceId].cancelInterval);
+          this.devices[deviceId].cancelInterval = null;
          }
-        if (!this.paused && this.playing) {
-            this.position = (this.offset + deviceState.Position + (Date.now() - deviceState.FromTime));
-            this.cancelInterval = setInterval(function() {
-              this.position += 1000;
+        if (!this.devices[deviceId].paused && this.devices[deviceId].playing) {
+            this.devices[deviceId].position = (this.devices[deviceId].offset + deviceState.Position + (Date.now() - deviceState.FromTime));
+            this.devices[deviceId].cancelInterval = setInterval(function() {
+              this.devices[deviceId].position += 1000;
               this.emit('change');
             }.bind(this), 1000);
         }
         else {
-          this.position = deviceState.Position;
+          this.devices[deviceId].position = deviceState.Position;
           this.emit('change');
         }
       }.bind(this));
@@ -103,8 +95,7 @@ var DeviceStateStore = Fluxxor.createStore({
     },
 
     receiveDeviceSubmission: function(state) {
-      this.submission_processing = state.processing;
-      this.submission_progress = state.progress;
+      this.submissions[state.device] = state;
       this.emit('change');
     },
 

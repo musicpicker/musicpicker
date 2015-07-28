@@ -29,6 +29,7 @@ function createDeviceState(deviceId) {
       Queue: tredis.lrange('musichub.device.' + deviceId + '.queue', 0, -1)
     }).then(function(result) {
       resolve({
+        Device: deviceId,
         Connected: Boolean(parseInt(result.Connected)),
         Current: parseInt(result.Current),
         Duration: parseInt(result.Duration),
@@ -206,6 +207,7 @@ function reportSubmissionStatus(socket, deviceId) {
   redisChan.on('message', function(channel, message) {
     if (channel === 'submissions.' + deviceId + '.progress') {
       socket.emit('Submission', {
+        device: deviceId,
         processing: true,
         progress: parseInt(message)
       });
@@ -213,6 +215,7 @@ function reportSubmissionStatus(socket, deviceId) {
 
     if (channel === 'submissions.' + deviceId + '.processing') {
       socket.emit('Submission', {
+        device: deviceId,
         processing: Boolean(parseInt(message))
       });
     }

@@ -88,14 +88,22 @@ var PlayerPosition = React.createClass({
 
 	getStateFromFlux: function() {
 		var flux = this.getFlux();
-		return {
-			position: flux.store('DeviceStateStore').position
-		};
+		var deviceId = flux.store('AuthStore').device;
+		if (flux.store('DeviceStateStore').devices[deviceId] !== undefined) {
+			return {
+				position: flux.store('DeviceStateStore').devices[deviceId].position
+			};
+		}
+		else {
+			return {
+				position: 0
+			}
+		}
 	},
 
 	render: function() {
 		var position = this.state.position;
-		if (position < 0) {
+		if (position < 0 || position === null) {
 			position = 0;
 		}
 		var percent = (position * 100) / (this.props.duration * 1000);
@@ -123,13 +131,23 @@ var Player = React.createClass({
 
 	getStateFromFlux: function() {
 		var flux = this.getFlux();
-		return {
-			connected: flux.store('DeviceStateStore').connected,
-			playing: flux.store('DeviceStateStore').playing,
-			current: flux.store('DeviceStateStore').current,
-			duration: flux.store('DeviceStateStore').duration,
-			lastPause: flux.store('DeviceStateStore').lastPause
-		};
+		var deviceId = flux.store('AuthStore').device;
+		if (flux.store('DeviceStateStore').devices[deviceId] !== undefined) {
+			return {
+				connected: flux.store('DeviceStateStore').devices[deviceId].connected,
+				playing: flux.store('DeviceStateStore').devices[deviceId].playing,
+				current: flux.store('DeviceStateStore').devices[deviceId].current,
+				duration: flux.store('DeviceStateStore').devices[deviceId].duration
+			};
+		}
+		else {
+			return {
+				connected: false,
+				playing: false,
+				current: null,
+				duration: 0
+			}
+		}
 	},
 
 	pause: function() {

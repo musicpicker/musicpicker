@@ -3,9 +3,10 @@ var Submission = React.createClass({
 
   getStateFromFlux: function() {
     var flux = this.getFlux();
+    var deviceId = flux.store('AuthStore').device;
     return {
-      submission_processing: flux.store('DeviceStateStore').submission_processing,
-      submission_progress: flux.store('DeviceStateStore').submission_progress
+      submission_processing: flux.store('DeviceStateStore').submissions[deviceId].processing,
+      submission_progress: flux.store('DeviceStateStore').submissions[deviceId].progress
     }
   },
 

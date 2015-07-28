@@ -3,8 +3,16 @@ var Connection = React.createClass({
 
   getStateFromFlux: function() {
     var flux = this.getFlux();
-    return {
-      connected: flux.store('DeviceStateStore').connected
+    var deviceId = flux.store('AuthStore').device;
+    if (flux.store('DeviceStateStore').devices[deviceId] !== undefined) {
+      return {
+        connected: flux.store('DeviceStateStore').devices[deviceId].connected
+      }
+    }
+    else {
+      return {
+        connected: false
+      }
     }
   },
 
