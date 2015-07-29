@@ -351,27 +351,38 @@ function processSubmissions(job, deviceId, userId, submissions, done) {
 }
 
 router.post('/:id/submit', statsd('device-submit'), function(req, res) {
-  var job = queue.create('submissions', {
-    deviceId: req.params['id'],
-    userId: req.user.id,
-    submissions: req.body
-  });
-
-  job.on('progress', function(progress, data) {
-    redis.publish('submissions.' + req.params['id'] + '.progress', progress);
-  });
-  job.on('complete', function() {
-    redis.publish('submissions.' + req.params['id'] + '.processing', 0);
-  });
-
-  job.save(function(err) {
-    if (err) {
-      return res.sendStatus(500);
+  new models.Device({
+    Id: req.params['id'],
+    OwnerId: req.user.id
+  }).fetch().then(function(device) {
+    if (device === null) {
+      return res.sendStatus(404);
     }
-    else {
-      redis.publish('submissions.' + req.params['id'] + '.processing', 1);
-      return res.sendStatus(200);
-    }
+    
+    var job = queue.create('submissions', {
+      deviceId: req.params['id'],
+      userId: req.user.id,
+      submissions: req.body
+    });
+
+    job.on('progress', function(progress, data) {
+      redis.publish('submissions.' + req.params['id'] + '.progress', progress);
+    });
+    job.on('complete', function() {
+      redis.publish('submissions.' + req.params['id'] + '.processing', 0);
+    });
+
+    job.save(function(err) {
+      if (err) {
+        return res.sendStatus(500);
+      }
+      else {
+        redis.publish('submissions.' + req.params['id'] + '.processing', 1);
+        return res.sendStatus(200);
+      }
+    });
+  }).catch(function() {
+    res.sendStatus(404);
   });
 });
 

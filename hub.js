@@ -229,6 +229,9 @@ function hub(io, clientId, socket) {
     new models.Device({
       Id: deviceId
     }).fetch().then(function(device) {
+      if (device === null) {
+        return;
+      }
       if (device.get('OwnerId') === socket.client.user.id) {
         tredis.set('musichub.devices.' + clientId, deviceId);
         tredis.set('musichub.device.' + deviceId + '.connection', clientId);
@@ -242,6 +245,10 @@ function hub(io, clientId, socket) {
     new models.Device({
       Id: deviceId
     }).fetch().then(function(device) {
+      if (device === null) {
+        return;
+      }
+      
       if (device.get('OwnerId') === socket.client.user.id) {
         Promise.all([
           tredis.sadd('musichub.client.' + clientId + '.devices', deviceId),
