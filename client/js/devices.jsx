@@ -17,7 +17,7 @@ var DeviceItem = React.createClass({
     },
 
     select: function() {
-        this.transitionTo('device', {id: this.props.data.Id});
+        this.transitionTo('device-library', {id: this.props.data.Id});
     },
 
     render: function() {

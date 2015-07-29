@@ -64,11 +64,17 @@ router.get('/:id', statsd('device-detail'), function(req, res) {
 
 router.delete('/:id', statsd('device-detail'), function(req, res) {
   new models.Device({
-    id: req.params['id'],
+    Id: req.params['id'],
     OwnerId: req.user.id
   }).fetch().then(function(device) {
-    device.destroy();
-    return res.sendStatus(204);
+    Promise.all([
+      device.destroy(),
+      clearDeviceTracks(req.params['id'])
+    ]).then(function() {
+      res.sendStatus(204);
+    }).catch(function() {
+      res.sendStatus(500);
+    });
   }).catch(function(err) {
     return res.sendStatus(404);
   });
@@ -217,7 +223,7 @@ function getTrack(submission, device) {
   });
 }
 
-function clearDeviceTracks(deviceId, userId) {
+function clearDeviceTracks(deviceId) {
   return new Promise(function(resolve, reject) {
     knex('deviceTracks').where('DeviceId', deviceId).delete().then(function() {
       resolve();
@@ -319,7 +325,7 @@ function processSubmissions(job, deviceId, userId, submissions, done) {
   var begin = Date.now();
   var progress = submissionProgress(job, 4 * submissions.length);
 
-  clearDeviceTracks(deviceId, userId).then(function() {
+  clearDeviceTracks(deviceId).then(function() {
     Promise.each(submissions, function(submission) {
       return progress(getArtist.bind(this, submission));
     }.bind(this)).then(function() {

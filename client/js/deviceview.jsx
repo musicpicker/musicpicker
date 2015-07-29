@@ -1,3 +1,17 @@
+var DeviceLibrary = React.createClass({
+  render: function() {
+    return (
+      <div>
+          <ul className="nav nav-tabs">
+              <li role="presentation"><Link to="artists" params={{id: this.props.params.id}}>Artists</Link></li>
+              <li role="presentation"><Link to="albums" params={{id: this.props.params.id}}>Albums</Link></li>
+              <li role="presentation"><Link to="tracks" params={{id: this.props.params.id}}>Tracks</Link></li>
+          </ul>
+          <RouteHandler />
+      </div>
+    );
+  }
+})
 var DeviceView = React.createClass({
     mixins: [FluxMixin, StoreWatchMixin('DeviceStateStore'), Navigation],
 
@@ -42,14 +56,7 @@ var DeviceView = React.createClass({
     render: function() {
          if (!this.state.submission_processing) {
             var browser = (
-                <div>
-                    <ul className="nav nav-tabs">
-                        <li role="presentation"><Link to="artists" params={{id: this.props.params.id}}>Artists</Link></li>
-                        <li role="presentation"><Link to="albums" params={{id: this.props.params.id}}>Albums</Link></li>
-                        <li role="presentation"><Link to="tracks" params={{id: this.props.params.id}}>Tracks</Link></li>
-                    </ul>
-                    <RouteHandler />
-                </div>
+              <RouteHandler />
             );
           }
           else {
@@ -76,6 +83,7 @@ var DeviceView = React.createClass({
                 <div className="col-md-4 col-md-push-8">
                     <Connection deviceId={this.props.params.id} />
                     <Player deviceId={this.props.params.id} />
+                    <DeviceActions deviceId={this.props.params.id} />
                 </div>
                 <div className="col-md-8 col-md-pull-4">
                     {browser}

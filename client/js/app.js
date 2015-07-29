@@ -4,6 +4,7 @@ var StoreWatchMixin = Fluxxor.StoreWatchMixin;
 var RouteHandler = ReactRouter.RouteHandler;
 var Route = ReactRouter.Route;
 var DefaultRoute = ReactRouter.DefaultRoute;
+var Redirect = ReactRouter.Redirect;
 var Navigation = ReactRouter.Navigation;
 var Link = ReactRouter.Link;
 

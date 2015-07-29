@@ -27,11 +27,14 @@ function mpStart(container) {
     <Route handler={View}>
       <DefaultRoute name="devices" handler={Devices}/>
       <Route name="device" path="device/:id" handler={DeviceView}>
-        <DefaultRoute name="artists" handler={ArtistsView}/>
-        <Route name="albums" handler={AlbumsView}/>
-        <Route name="tracks" handler={TracksView}/>
-        <Route name="artist" path="artist/:artistId" handler={AlbumsView}/>
-        <Route name="album" path="album/:albumId" handler={TracksView}/>
+        <Route name="device-library" path="library" handler={DeviceLibrary}>
+          <DefaultRoute name="artists" handler={ArtistsView}/>
+          <Route name="albums" path="albums" handler={AlbumsView}/>
+          <Route name="tracks" path="tracks" handler={TracksView}/>
+          <Route name="artist" path="artist/:artistId" handler={AlbumsView}/>
+          <Route name="album" path="album/:albumId" handler={TracksView}/>
+        </Route>
+        <Route name="device-delete" path="delete" handler={DeviceDelete}/>
       </Route>
     </Route>
   );
