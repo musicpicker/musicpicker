@@ -71,7 +71,13 @@ function checkRegistration(clientId, deviceId, skipDevice) {
           if (Boolean(parseInt(exists))) {
             resolve();
           }
+          else {
+            reject();
+          }
         })
+      }
+      else {
+        reject();
       }
     });
   });
@@ -230,6 +236,7 @@ function hub(io, clientId, socket) {
       Id: deviceId
     }).fetch().then(function(device) {
       if (device === null) {
+        socket.emit('DeviceNotFound', deviceId);
         return;
       }
       if (device.get('OwnerId') === socket.client.user.id) {
@@ -246,9 +253,10 @@ function hub(io, clientId, socket) {
       Id: deviceId
     }).fetch().then(function(device) {
       if (device === null) {
+        socket.emit('DeviceNotFound', deviceId);
         return;
       }
-      
+
       if (device.get('OwnerId') === socket.client.user.id) {
         Promise.all([
           tredis.sadd('musichub.client.' + clientId + '.devices', deviceId),
@@ -288,6 +296,8 @@ function hub(io, clientId, socket) {
           })
         });
       });
+    }).catch(function() {
+      socket.emit('DeviceNotFound', deviceId);
     });
   });
 
@@ -296,12 +306,16 @@ function hub(io, clientId, socket) {
       createDeviceState(deviceId).then(function(state) {
         socket.emit('SetState', state);
       })
+    }).catch(function() {
+      socket.emit('DeviceNotFound', deviceId);
     });
   });
 
   socket.on('Play', function(data) {
     checkRegistration(socket.id, data.DeviceId).then(function() {
       play(io, socket, data.DeviceId);
+    }).catch(function() {
+      socket.emit('DeviceNotFound', data.DeviceId);
     });
   });
 
@@ -318,12 +332,16 @@ function hub(io, clientId, socket) {
           io.sockets.to(deviceClientId).emit('Pause');
         });
       });
+    }).catch(function() {
+      socket.emit('DeviceNotFound', data.DeviceId);
     });
   })
 
   socket.on('RequestNext', function(data) {
     checkRegistration(socket.id, data.DeviceId).then(function() {
       requestNext(io, socket, data.DeviceId);
+    }).catch(function() {
+      socket.emit('DeviceNotFound', data.DeviceId);
     });
   });
 
@@ -335,6 +353,8 @@ function hub(io, clientId, socket) {
           play(io, socket, deviceId, true);
         }
       })
+    }).catch(function() {
+      socket.emit('DeviceNotFound', deviceId);
     });
   });
 
