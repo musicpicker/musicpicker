@@ -56,7 +56,9 @@ var DeviceStateStore = Fluxxor.createStore({
 
     receiveDeviceState: function(deviceState) {
         if (this.devices[deviceState.Device] === undefined) {
-          this.devices[deviceState.Device] = {};
+          this.devices[deviceState.Device] = {
+            artwork: null
+          };
         }
 
         this.devices[deviceState.Device].connected = deviceState.Connected;
@@ -67,7 +69,27 @@ var DeviceStateStore = Fluxxor.createStore({
         this.devices[deviceState.Device].queue = deviceState.Queue;
 
         this.updatePosition(deviceState);
+        this.getArtwork(deviceState);
+
         this.emit('change');
+    },
+
+    getArtwork: function(deviceState) {
+      var options = {
+        headers: {
+          'Authorization': 'Bearer ' + flux.store('AuthStore').bearer
+        }
+      };
+
+      if (deviceState.Current !== null) {
+        jQuery.ajax('/api/Tracks/' + deviceState.Current, options).done(function(track) {
+          jQuery.ajax('/api/Albums/' + track.AlbumId, options).done(function(album) {
+            this.devices[deviceState.Device].artwork = album.Artwork;
+          }.bind(this));
+        }.bind(this));
+
+        this.emit('change');
+      }
     },
 
     updatePosition: function(deviceState) {

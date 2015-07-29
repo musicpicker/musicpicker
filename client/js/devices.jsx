@@ -1,39 +1,18 @@
 var DeviceItem = React.createClass({
-    mixins: [Navigation, FluxMixin, StoreWatchMixin('DeviceStateStore', 'AuthStore')],
-
-    getInitialState: function() {
-      return {
-        image: null
-      }
-    },
+    mixins: [Navigation, FluxMixin, StoreWatchMixin('DeviceStateStore')],
 
     getStateFromFlux: function() {
       var flux = this.getFlux();
       var deviceId = this.props.data.Id;
       if (flux.store('DeviceStateStore').devices[deviceId] !== undefined) {
         return {
-          current: flux.store('DeviceStateStore').devices[deviceId].current
+          image: flux.store('DeviceStateStore').devices[deviceId].artwork
         };
       }
       else {
         return {
-          current: null
+          image: null
         }
-      }
-    },
-
-    componentDidMount: function() {
-      var options = {
-        headers: {
-          'Authorization': 'Bearer ' + this.getFlux().store('AuthStore').bearer
-        }
-      };
-      if (this.state.current !== null) {
-        jQuery.ajax('/api/Tracks/' + this.state.current, options).done(function(track) {
-          jQuery.ajax('/api/Albums/' + track.AlbumId, options).done(function(album) {
-            this.setState({image: album.Artwork});
-          }.bind(this));
-        }.bind(this));
       }
     },
 
