@@ -1,5 +1,5 @@
 var DeviceItem = React.createClass({
-    mixins: [Navigation, FluxMixin, StoreWatchMixin('DeviceStateStore')],
+    mixins: [Navigation, FluxMixin, StoreWatchMixin('DeviceStateStore', 'AuthStore')],
 
     getInitialState: function() {
       return {
@@ -32,8 +32,8 @@ var DeviceItem = React.createClass({
         jQuery.ajax('/api/Tracks/' + this.state.current, options).done(function(track) {
           jQuery.ajax('/api/Albums/' + track.AlbumId, options).done(function(album) {
             this.setState({image: album.Artwork});
-          });
-        });
+          }.bind(this));
+        }.bind(this));
       }
     },
 
@@ -46,7 +46,7 @@ var DeviceItem = React.createClass({
       var textStyle = null;
       if (this.state.image !== null) {
         panelStyle = {
-          'background-image': "url('" + this.state.image +"')"
+          'backgroundImage': "url('" + this.state.image +"')"
         };
         textStyle = {
           'background': 'rgba(0, 0, 0, 0.6)'
