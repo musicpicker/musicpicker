@@ -273,7 +273,7 @@ function flushTracksToDevice(device, progress) {
 };
 
 function getArtwork(submission, albumId, done) {
-  var key = '2c2e6ce34b0d78dac557611b898bf547';
+  var key = config.get('lastfm.key');
   var url = 'http://ws.audioscrobbler.com/2.0/?method=album.getinfo&api_key=' +
       key + '&artist=' + submission.Artist + '&album=' + submission.Album + '&format=json';
 
@@ -386,12 +386,12 @@ router.post('/:id/submit', statsd('device-submit'), function(req, res) {
   });
 });
 
-queue.process('submissions', 5, function(job, done) {
+queue.process('submissions', config.get('queue.paralel.submissions'), function(job, done) {
   redis.set('musicpicker.submissionjob.' + job.data.deviceId, job.id);
   processSubmissions(job, job.data.deviceId, job.data.userId, job.data.submissions, done);
 });
 
-queue.process('artworks', 3, function(job, done) {
+queue.process('artworks', config.get('queue.paralel.artworks'), function(job, done) {
   getArtwork(job.data.submission, job.data.albumId, done);
 });
 

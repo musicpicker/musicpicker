@@ -1,4 +1,5 @@
 {
+  "secret": "N7kgMzjcDlngLKDIyxKltffPLVRWMPhN/kT1hg/DHEE=",
   "database": {
     "client": "sqlite3",
     "connection": {
@@ -14,5 +15,14 @@
   "statsd": {
   	"host": "localhost",
   	"port": 8125
+  },
+  "lastfm": {
+    "key": "2c2e6ce34b0d78dac557611b898bf547"
+  },
+  "queue": {
+    "paralel": {
+      "submissions": 5,
+      "artworks": 3
+    }
   }
 }

@@ -39,7 +39,7 @@ app.use('/static', express.static(path.join(__dirname, 'static')));
 
 app.use(cookieSession({
   'name': 'session',
-  'keys': ['N7kgMzjcDlngLKDIyxKltffPLVRWMPhN/kT1hg/DHEE=']
+  'keys': [config.get('secret')]
 }));
 app.use(passport.initialize());
 app.use(passport.session());
