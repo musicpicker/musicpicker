@@ -53,7 +53,7 @@ router.post('/', statsd('device-list'), function(req, res) {
 
 router.get('/:id', statsd('device-detail'), function(req, res) {
   new models.Device({
-    id: req.params['id'],
+    Id: req.params['id'],
     OwnerId: req.user.id
   }).fetch().then(function(device) {
     return res.json(device);
