@@ -1,6 +1,12 @@
 var DeviceItem = React.createClass({
     mixins: [Navigation, FluxMixin, StoreWatchMixin('DeviceStateStore')],
 
+    getInitialState: function() {
+      return {
+        image: null
+      }
+    },
+
     getStateFromFlux: function() {
       var flux = this.getFlux();
       var deviceId = this.props.data.Id;
@@ -16,17 +22,45 @@ var DeviceItem = React.createClass({
       }
     },
 
+    componentDidMount: function() {
+      var options = {
+        headers: {
+          'Authorization': 'Bearer ' + this.getFlux().store('AuthStore').bearer
+        }
+      };
+      if (this.state.current !== null) {
+        jQuery.ajax('/api/Tracks/' + this.state.current, options).done(function(track) {
+          jQuery.ajax('/api/Albums/' + track.AlbumId, options).done(function(album) {
+            this.setState({image: album.Artwork});
+          });
+        });
+      }
+    },
+
     select: function() {
         this.transitionTo('device', {id: this.props.data.Id});
     },
 
     render: function() {
+      var panelStyle = null;
+      var textStyle = null;
+      if (this.state.image !== null) {
+        panelStyle = {
+          'background-image': "url('" + this.state.image +"')"
+        };
+        textStyle = {
+          'background': 'rgba(0, 0, 0, 0.6)'
+        }
+      }
+
       return (
-          <div className="col-md-6" onClick={this.select}>
+          <div className="col-sm-6" onClick={this.select}>
             <div className="panel panel-default">
-              <div className="panel-body">
-                <h4>{this.props.data.Name}</h4>
-                <Connection deviceId={this.props.data.Id} prefix={false} />
+              <div className="panel-body device-panel" style={panelStyle}>
+                <div className="device-text" style={textStyle}>
+                  <h4>{this.props.data.Name}</h4>
+                  <Connection deviceId={this.props.data.Id} prefix={false} />
+                </div>
               </div>
             </div>
           </div>
@@ -70,7 +104,7 @@ var Devices = React.createClass({
 	    var devices = (
         <div className="row">
           {this.state.devices.map(function(device) {
-              return <DeviceItem data={device} />;
+              return <DeviceItem data={device} key={device.Id} />;
           })}
         </div>
 	    );
