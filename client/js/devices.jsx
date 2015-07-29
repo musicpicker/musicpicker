@@ -1,16 +1,36 @@
 var DeviceItem = React.createClass({
-    mixins: [Navigation],
+    mixins: [Navigation, FluxMixin, StoreWatchMixin('DeviceStateStore')],
+
+    getStateFromFlux: function() {
+      var flux = this.getFlux();
+      var deviceId = this.props.data.Id;
+      if (flux.store('DeviceStateStore').devices[deviceId] !== undefined) {
+        return {
+          current: flux.store('DeviceStateStore').devices[deviceId].current
+        };
+      }
+      else {
+        return {
+          current: null
+        }
+      }
+    },
 
     select: function() {
         this.transitionTo('device', {id: this.props.data.Id});
     },
 
     render: function() {
-        return (
-            <button type="button" className="list-group-item" onClick={this.select}>
-                {this.props.data.Name}
-            </button>
-        );
+      return (
+          <div className="col-md-6" onClick={this.select}>
+            <div className="panel panel-default">
+              <div className="panel-body">
+                <h4>{this.props.data.Name}</h4>
+                <Connection deviceId={this.props.data.Id} prefix={false} />
+              </div>
+            </div>
+          </div>
+      );
     }
 });
 
@@ -48,11 +68,11 @@ var Devices = React.createClass({
 	  );
 	  if (this.state.devices !== null && this.state.devices.length > 0) {
 	    var devices = (
-	      <div className="list-group">
-	          {this.state.devices.map(function(device) {
-	              return <DeviceItem data={device} />;
-	          })}
-	      </div>
+        <div className="row">
+          {this.state.devices.map(function(device) {
+              return <DeviceItem data={device} />;
+          })}
+        </div>
 	    );
 	  }
 	  return (
