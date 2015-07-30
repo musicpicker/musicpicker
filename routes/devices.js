@@ -82,9 +82,12 @@ router.delete('/:id', statsd('device-detail'), function(req, res) {
 });
 
 function getArtist(submission) {
-  metrics.increment('submission.getArtist.calls');
   return new Promise(function(resolve, reject) {
+    var timer = metrics.createTimer('submission.getArtist.response_time');
+    metrics.increment('submission.getArtist.calls');
+
     if (submission.Artist === null) {
+      timer.stop();
       return resolve();
     }
     redis.get('musicpicker.submissions.' + submission.Artist, function(err, reply) {
@@ -96,6 +99,7 @@ function getArtist(submission) {
           if (config.has('redis.cache.expire')) {
             redis.expire('musicpicker.submissions.' + submission.Artist, config.get('redis.cache.expire'));
           }
+          timer.stop();
           resolve(artist.id);
         }).catch(function(err) {
           new models.Artist({
@@ -105,8 +109,10 @@ function getArtist(submission) {
             if (config.has('redis.cache.expire')) {
               redis.expire('musicpicker.submissions.' + submission.Artist, config.get('redis.cache.expire'));
             }
+            timer.stop();
             resolve(artist.id);
           }).catch(function(err) {
+            timer.stop();
             resolve();
           });
         });
@@ -115,6 +121,7 @@ function getArtist(submission) {
         if (config.has('redis.cache.expire')) {
           redis.expire('musicpicker.submissions.' + submission.Artist, config.get('redis.cache.expire'));
         }
+        timer.stop();
         resolve(reply);
       }
     });
@@ -122,9 +129,12 @@ function getArtist(submission) {
 }
 
 function getAlbum(submission, artistId) {
-  metrics.increment('submission.getAlbum.calls');
   return new Promise(function(resolve, reject) {
+    metrics.increment('submission.getAlbum.calls');
+    var timer = metrics.createTimer('submission.getAlbum.response_time');
+
     if (submission.Artist === null || submission.Album === null) {
+      timer.stop();
       return resolve();
     }
     redis.get('musicpicker.submissions.' + submission.Artist, function(err, artistId) {
@@ -138,6 +148,7 @@ function getAlbum(submission, artistId) {
             if (config.has('redis.cache.expire')) {
               redis.expire('musicpicker.submissions.' + submission.Artist + '.' + submission.Album, config.get('redis.cache.expire'));
             }
+            timer.stop();
             resolve(album.id);
           }).catch(function(err) {
             new models.Album({
@@ -153,8 +164,10 @@ function getAlbum(submission, artistId) {
                 submission: submission,
                 albumId: album.id
               }).save();
+              timer.stop();
               resolve(album.id);
             }).catch(function(err) {
+              timer.stop();
               resolve();
             });
           });
@@ -163,6 +176,7 @@ function getAlbum(submission, artistId) {
           if (config.has('redis.cache.expire')) {
             redis.expire('musicpicker.submissions.' + submission.Artist + '.' + submission.Album, config.get('redis.cache.expire'));
           }
+          timer.stop();
           resolve(reply);
         }
       });
@@ -171,9 +185,12 @@ function getAlbum(submission, artistId) {
 }
 
 function getTrack(submission, device) {
-  metrics.increment('submission.getTrack.calls');
   return new Promise(function(resolve, reject) {
+    metrics.increment('submission.getTrack.calls');
+    var timer = metrics.createTimer('submission.getTrack.response_time');
+
     if (submission.Artist === null || submission.Album === null || submission.Title === null) {
+      timer.stop();
       return resolve();
     }
     redis.get('musicpicker.submissions.' + submission.Artist + '.' + submission.Album, function(err, albumId) {
@@ -191,6 +208,8 @@ function getTrack(submission, device) {
             redis.hset('musicpicker.devicetracks.' + device.id + '.' + track.id, 'trackId', track.id);
             redis.hset('musicpicker.devicetracks.' + device.id + '.' + track.id, 'deviceTrackId', submission.Id);
             redis.hset('musicpicker.devicetracks.' + device.id + '.' + track.id, 'duration', submission.Duration);
+
+            timer.stop();
             resolve(track.id);
           }).catch(function(err) {
             new models.Track({
@@ -206,8 +225,11 @@ function getTrack(submission, device) {
               redis.hset('musicpicker.devicetracks.' + device.id + '.' + track.id, 'trackId', track.id);
               redis.hset('musicpicker.devicetracks.' + device.id + '.' + track.id, 'deviceTrackId', submission.Id);
               redis.hset('musicpicker.devicetracks.' + device.id + '.' + track.id, 'duration', submission.Duration);
+
+              timer.stop();
               resolve(track.id);
             }).catch(function(err) {
+              timer.stop();
               resolve();
             })
           });
@@ -220,6 +242,8 @@ function getTrack(submission, device) {
           redis.hset('musicpicker.devicetracks.' + device.id + '.' + reply, 'trackId', reply);
           redis.hset('musicpicker.devicetracks.' + device.id + '.' + reply, 'deviceTrackId', submission.Id);
           redis.hset('musicpicker.devicetracks.' + device.id + '.' + reply, 'duration', submission.Duration);
+
+          timer.stop();
           resolve(reply);
         }
       });
@@ -228,17 +252,22 @@ function getTrack(submission, device) {
 }
 
 function clearDeviceTracks(deviceId) {
-  metrics.increment('submission.clearDeviceTracks.calls');
   return new Promise(function(resolve, reject) {
+    metrics.increment('submission.clearDeviceTracks.calls');
+    var timer = metrics.createTimer('submission.clearDeviceTracks.response_time');
+
     knex('deviceTracks').where('DeviceId', deviceId).delete().then(function() {
+      timer.stop();
       resolve();
     })
   });
 }
 
 function flushTrackToDevice(device, key) {
-  metrics.increment('submission.flushTrackToDevice.calls');
   return new Promise(function(resolve, reject) {
+    metrics.increment('submission.flushTrackToDevice.calls');
+    var timer = metrics.createTimer('submission.flushTrackToDevice.response_time');
+
     redis.hget(key, 'trackId', function(err, trackId) {
       redis.hget(key, 'deviceTrackId', function(err, deviceTrackId) {
         redis.hget(key, 'duration', function(err, duration) {
@@ -248,6 +277,7 @@ function flushTrackToDevice(device, key) {
             DeviceTrackId: deviceTrackId,
             TrackDuration: duration
           }).save().then(function() {
+            timer.stop();
             resolve();
           });
         });
@@ -257,8 +287,10 @@ function flushTrackToDevice(device, key) {
 }
 
 function flushTracksToDevice(device, progress) {
-  metrics.increment('submission.flushTracksToDevice.calls');
   return new Promise(function(resolve, reject) {
+    metrics.increment('submission.flushTracksToDevice.calls');
+    var timer = metrics.createTimer('submission.flushTracksToDevice.response_time');
+
     toArray(redis.scan({pattern: 'musicpicker.devicetracks.' + device.id + '.*', count: 100000}), function(err, arr) {
       Promise.each(arr, function(item) {
         return progress(flushTrackToDevice.bind(this, device, item));
@@ -271,6 +303,7 @@ function flushTracksToDevice(device, progress) {
               })
             });
           }).then(function() {
+            timer.stop();
             resolve();
           });
         });
@@ -281,6 +314,8 @@ function flushTracksToDevice(device, progress) {
 
 function getArtwork(submission, albumId, done) {
   metrics.increment('submission.getArtwork.calls');
+  var timer = metrics.createTimer('submission.getArtwork.response_time');
+
   var key = config.get('lastfm.key');
   var url = 'http://ws.audioscrobbler.com/2.0/?method=album.getinfo&api_key=' +
       key + '&artist=' + submission.Artist + '&album=' + submission.Album + '&format=json';
@@ -291,6 +326,7 @@ function getArtwork(submission, albumId, done) {
         var result = JSON.parse(body);
       }
       catch (ex) {
+        timer.stop();
         return done();
       }
       if (result.album !== undefined && result.album.image !== undefined) {
@@ -302,12 +338,20 @@ function getArtwork(submission, albumId, done) {
           }).fetch().then(function(album) {
             album.set('Artwork', image);
             album.save();
+
+            timer.stop();
             done();
           }).catch(function() {
+            timer.stop();
             done();
           });
         }
       }
+      timer.stop();
+      done();
+    }
+    else {
+      timer.stop();
       done();
     }
   });
@@ -331,6 +375,8 @@ function submissionProgress(job, len) {
 
 function processSubmissions(job, deviceId, userId, submissions, done) {
   metrics.increment('submission.processSubmissions.calls');
+  var timer = metrics.createTimer('submission.processSubmissions.response_time');
+
   var begin = Date.now();
   var progress = submissionProgress(job, 4 * submissions.length);
 
@@ -350,6 +396,8 @@ function processSubmissions(job, deviceId, userId, submissions, done) {
           }.bind(this)).then(function() {
             flushTracksToDevice(device, progress).then(function() {
               redis.del('musicpicker.submissionjob.' + deviceId);
+
+              timer.stop();
               done();
             });
           }.bind(this));
