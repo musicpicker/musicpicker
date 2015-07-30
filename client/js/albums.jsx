@@ -33,12 +33,12 @@ var AlbumsView = React.createClass({
         }
     },
 
-    componentDidMount: function() {
-        if (this.props.params.artistId === undefined) {
+    getMeta: function(artistId) {
+        if (artistId === undefined) {
             var url = "/api/Albums?device=" + this.props.params.id;
         }
         else {
-            var url = "/api/Albums?device=" + this.props.params.id + "&artist=" + this.props.params.artistId;
+            var url = "/api/Albums?device=" + this.props.params.id + "&artist=" + artistId;
         }
 
         jQuery.ajax(url, {
@@ -48,6 +48,14 @@ var AlbumsView = React.createClass({
         }).done(function(data) {
             this.setState({albums: data});
         }.bind(this));
+    },
+
+    componentDidMount: function() {
+        this.getMeta(this.props.params.artistId);
+    },
+
+    componentWillReceiveProps: function(nextProps) {
+        this.getMeta(nextProps.artistId);
     },
 
     back: function() {

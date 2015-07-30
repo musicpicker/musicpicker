@@ -7,12 +7,12 @@ var TracksView = React.createClass({
         }
     },
 
-    componentDidMount: function() {
-        if (this.props.params.albumId === undefined) {
+    getMeta: function(albumId) {
+        if (albumId === undefined) {
             var url = "/api/Tracks?device=" + this.props.params.id;
         }
         else {
-            var url = "/api/Tracks?device=" + this.props.params.id + "&album=" + this.props.params.albumId;
+            var url = "/api/Tracks?device=" + this.props.params.id + "&album=" + albumId;
         }
 
         jQuery.ajax(url, {
@@ -22,6 +22,14 @@ var TracksView = React.createClass({
         }).done(function(data) {
             this.setState({tracks: data});
         }.bind(this));
+    },
+
+    componentDidMount: function() {
+        this.getMeta(this.props.params.albumId);
+    },
+
+    componentWillReceiveProps: function(nextProps) {
+        this.getMeta(nextProps.albumId);
     },
 
     back: function() {
