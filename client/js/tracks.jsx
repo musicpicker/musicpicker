@@ -53,6 +53,7 @@ var TracksView = React.createClass({
     render: function() {
         return (
             <div className="list-group">
+                <br />
                 {this.state.tracks.map(function(track, index) {
                     return(
                         <button key={index} onClick={this.select.bind(this, index)} type="button" className="list-group-item">{track.Name}</button>

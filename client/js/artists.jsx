@@ -14,7 +14,13 @@ var ArtistItem = React.createClass({
 
     render: function() {
         return(
-            <button onClick={this.select} type="button" className="list-group-item">{this.props.name}</button>
+            <div className="col-sm-2 col-xs-6" onClick={this.select} style={{cursor: 'pointer'}}>
+                <div className="thumbnail">
+                    <div className="caption">
+                        {this.props.name}
+                    </div>
+                </div>
+            </div>
         )
     }
 });
@@ -40,7 +46,8 @@ var ArtistsView = React.createClass({
 
     render: function() {
         return (
-            <div className="list-group">
+            <div className="row">
+            <br />
                 {this.state.artists.map(function(artist) {
                     return(
                         <ArtistItem key={artist.Id} id={artist.Id} name={artist.Name} deviceId={this.props.params.id} />
