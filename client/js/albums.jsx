@@ -1,20 +1,25 @@
 var AlbumItem = React.createClass({
-    mixins: [FluxMixin, Navigation],
-
-    getDefaultProps: function() {
-        return {
-            id: null,
-            name: null
-        }
-    },
+    mixins: [Navigation],
 
     select: function() {
-        this.transitionTo('album', {id: this.props.deviceId, albumId: this.props.id});
+        this.transitionTo('album', {id: this.props.deviceId, albumId: this.props.data.Id});
     },
 
     render: function() {
+        var image = null;
+        if (this.props.data.Artwork !== null) {
+            image = <img src={this.props.data.Artwork} />;
+        }
+
         return(
-            <button onClick={this.select} type="button" className="list-group-item">{this.props.name}</button>
+            <div className="col-xs-6 col-sm-4" onClick={this.select} style={{cursor: 'pointer'}}>
+                <div className="thumbnail">
+                    {image}
+                    <div className="caption">
+                        <b>{this.props.data.Name}</b>
+                    </div>
+                </div>
+            </div>
         )
     }
 });
@@ -51,10 +56,11 @@ var AlbumsView = React.createClass({
 
     render: function() {
         return (
-            <div className="list-group">
+            <div className="row">
+                <br />
                 {this.state.albums.map(function(album) {
                     return(
-                        <AlbumItem key={album.Id} id={album.Id} name={album.Name} deviceId={this.props.params.id} />
+                        <AlbumItem key={album.Id} data={album} deviceId={this.props.params.id} />
                     )
                 }.bind(this))}
             </div>
