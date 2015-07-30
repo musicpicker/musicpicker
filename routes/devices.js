@@ -395,6 +395,7 @@ function submissionProgress(job, len) {
 function processSubmissions(job, deviceId, userId, submissions, done) {
   metrics.increment('submission.processSubmissions.calls');
   var timer = metrics.createTimer('submission.processSubmissions.response_time');
+  metrics.set('submission.processSubmissions.length', submissions.length);
 
   var begin = Date.now();
   var progress = submissionProgress(job, 4 * submissions.length);
