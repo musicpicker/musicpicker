@@ -30,7 +30,8 @@ var ArtistsView = React.createClass({
 
     getInitialState: function() {
         return {
-            artists: []
+            artists: [],
+            filtered: [],
         }
     },
 
@@ -40,19 +41,35 @@ var ArtistsView = React.createClass({
                 'Authorization': 'Bearer ' + this.getFlux().store('AuthStore').bearer
             }
         }).done(function(data) {
-            this.setState({artists: data});
+            this.setState({artists: data, filtered: data});
         }.bind(this));
+    },
+
+    search: function() {
+        var filter = $(React.findDOMNode(this.refs.search)).val().toLowerCase();
+        var filtered = this.state.artists.filter(function(item) {
+            return item.Name.toLowerCase().includes(filter);
+        });
+        this.setState({filtered: filtered});
     },
 
     render: function() {
         return (
-            <div className="row">
-            <br />
-                {this.state.artists.map(function(artist) {
-                    return(
-                        <ArtistItem key={artist.Id} id={artist.Id} name={artist.Name} deviceId={this.props.params.id} />
-                    )
-                }.bind(this))}
+            <div>
+                <br />
+                <div className="row">
+                    <div className="col-sm-6">
+                        <input type="text" className="form-control" placeholder="Artist search" ref="search" onInput={this.search}/>
+                    </div>
+                </div>
+                <br />
+                <div className="row">
+                    {this.state.filtered.map(function(artist) {
+                        return(
+                            <ArtistItem key={artist.Id} id={artist.Id} name={artist.Name} deviceId={this.props.params.id} />
+                        )
+                    }.bind(this))}
+                </div>
             </div>
         )
     }

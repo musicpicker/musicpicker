@@ -3,7 +3,8 @@ var TracksView = React.createClass({
 
     getInitialState: function() {
         return {
-            tracks: []
+            tracks: [],
+            filtered: []
         }
     },
 
@@ -20,7 +21,7 @@ var TracksView = React.createClass({
                 'Authorization': 'Bearer ' + this.getFlux().store('AuthStore').bearer
             }
         }).done(function(data) {
-            this.setState({tracks: data});
+            this.setState({tracks: data, filtered: data});
         }.bind(this));
     },
 
@@ -34,6 +35,14 @@ var TracksView = React.createClass({
 
     back: function() {
         this.getFlux().actions.back();
+    },
+
+    search: function() {
+        var filter = $(React.findDOMNode(this.refs.search)).val().toLowerCase();
+        var filtered = this.state.tracks.filter(function(item) {
+            return item.Name.toLowerCase().includes(filter);
+        });
+        this.setState({filtered: filtered});
     },
 
     select: function(index) {
@@ -52,13 +61,21 @@ var TracksView = React.createClass({
 
     render: function() {
         return (
-            <div className="list-group">
+            <div>
                 <br />
-                {this.state.tracks.map(function(track, index) {
-                    return(
-                        <button key={index} onClick={this.select.bind(this, index)} type="button" className="list-group-item">{track.Name}</button>
-                    )
-                }.bind(this))}
+                <div className="row">
+                    <div className="col-sm-6">
+                        <input type="text" className="form-control" placeholder="Track search" ref="search" onInput={this.search}/>
+                    </div>
+                </div>
+                <br />
+                <div className="list-group">
+                    {this.state.filtered.map(function(track, index) {
+                        return(
+                            <button key={index} onClick={this.select.bind(this, index)} type="button" className="list-group-item">{track.Name}</button>
+                        )
+                    }.bind(this))}
+                </div>
             </div>
         )
     }

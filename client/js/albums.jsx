@@ -29,7 +29,8 @@ var AlbumsView = React.createClass({
 
     getInitialState: function() {
         return {
-            albums: []
+            albums: [],
+            filtered: []
         }
     },
 
@@ -46,7 +47,7 @@ var AlbumsView = React.createClass({
                 'Authorization': 'Bearer ' + this.getFlux().store('AuthStore').bearer
             }
         }).done(function(data) {
-            this.setState({albums: data});
+            this.setState({albums: data, filtered: data});
         }.bind(this));
     },
 
@@ -62,15 +63,31 @@ var AlbumsView = React.createClass({
         this.getFlux().actions.back();
     },
 
+    search: function() {
+        var filter = $(React.findDOMNode(this.refs.search)).val().toLowerCase();
+        var filtered = this.state.albums.filter(function(item) {
+            return item.Name.toLowerCase().includes(filter);
+        });
+        this.setState({filtered: filtered});
+    },
+
     render: function() {
         return (
-            <div className="row">
+            <div>
                 <br />
-                {this.state.albums.map(function(album) {
+                <div className="row">
+                    <div className="col-sm-6">
+                        <input type="text" className="form-control" placeholder="Album search" ref="search" onInput={this.search}/>
+                    </div>
+                </div>
+                <br />
+                <div className="row">
+                {this.state.filtered.map(function(album) {
                     return(
                         <AlbumItem key={album.Id} data={album} deviceId={this.props.params.id} />
                     )
                 }.bind(this))}
+                </div>
             </div>
         )
     }

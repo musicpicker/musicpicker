@@ -44,7 +44,6 @@ var DeviceView = React.createClass({
               'Authorization': 'Bearer ' + this.getFlux().store('AuthStore').bearer
           }
       }).done(function(data) {
-        console.log(data);
         this.setState({name: data.Name});
       }.bind(this));
     },
