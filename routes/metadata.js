@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 var models = require('../models');
 var knex = require('../knex');
-var statsd = require('../statsd');
+var statsd = require('../statsd').middleware;
 
 router.get('/tracks', function(req, res) {
   var deviceId = req.query['device'];

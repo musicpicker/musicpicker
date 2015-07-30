@@ -24,7 +24,7 @@ app.set('view engine', '.hbs');
 
 var expressStatsd = require('express-statsd');
 var lynx = require('lynx');
-var statsd = require('./statsd');
+var statsd = require('./statsd').middleware;
 app.use(expressStatsd({
 	client: new lynx(config.get('statsd.host'), config.get('statsd.port'))
 }));

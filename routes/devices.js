@@ -14,7 +14,8 @@ var redis = require('redis-scanstreams')(require('redis')).createClient(6379, co
 var toArray = require('stream-to-array')
 
 var queue = require('../queue');
-var statsd = require('../statsd');
+var statsd = require('../statsd').middleware;
+var metrics = require('../statsd').lynx;
 
 router.use(passport.authenticate('bearer', {session: false}));
 
@@ -81,6 +82,7 @@ router.delete('/:id', statsd('device-detail'), function(req, res) {
 });
 
 function getArtist(submission) {
+  metrics.increment('submission.getArtist.calls');
   return new Promise(function(resolve, reject) {
     if (submission.Artist === null) {
       return resolve();
@@ -120,6 +122,7 @@ function getArtist(submission) {
 }
 
 function getAlbum(submission, artistId) {
+  metrics.increment('submission.getAlbum.calls');
   return new Promise(function(resolve, reject) {
     if (submission.Artist === null || submission.Album === null) {
       return resolve();
@@ -168,6 +171,7 @@ function getAlbum(submission, artistId) {
 }
 
 function getTrack(submission, device) {
+  metrics.increment('submission.getTrack.calls');
   return new Promise(function(resolve, reject) {
     if (submission.Artist === null || submission.Album === null || submission.Title === null) {
       return resolve();
@@ -224,6 +228,7 @@ function getTrack(submission, device) {
 }
 
 function clearDeviceTracks(deviceId) {
+  metrics.increment('submission.clearDeviceTracks.calls');
   return new Promise(function(resolve, reject) {
     knex('deviceTracks').where('DeviceId', deviceId).delete().then(function() {
       resolve();
@@ -232,6 +237,7 @@ function clearDeviceTracks(deviceId) {
 }
 
 function flushTrackToDevice(device, key) {
+  metrics.increment('submission.flushTrackToDevice.calls');
   return new Promise(function(resolve, reject) {
     redis.hget(key, 'trackId', function(err, trackId) {
       redis.hget(key, 'deviceTrackId', function(err, deviceTrackId) {
@@ -251,6 +257,7 @@ function flushTrackToDevice(device, key) {
 }
 
 function flushTracksToDevice(device, progress) {
+  metrics.increment('submission.flushTracksToDevice.calls');
   return new Promise(function(resolve, reject) {
     toArray(redis.scan({pattern: 'musicpicker.devicetracks.' + device.id + '.*', count: 100000}), function(err, arr) {
       Promise.each(arr, function(item) {
@@ -273,6 +280,7 @@ function flushTracksToDevice(device, progress) {
 };
 
 function getArtwork(submission, albumId, done) {
+  metrics.increment('submission.getArtwork.calls');
   var key = config.get('lastfm.key');
   var url = 'http://ws.audioscrobbler.com/2.0/?method=album.getinfo&api_key=' +
       key + '&artist=' + submission.Artist + '&album=' + submission.Album + '&format=json';
@@ -322,6 +330,7 @@ function submissionProgress(job, len) {
 }
 
 function processSubmissions(job, deviceId, userId, submissions, done) {
+  metrics.increment('submission.processSubmissions.calls');
   var begin = Date.now();
   var progress = submissionProgress(job, 4 * submissions.length);
 

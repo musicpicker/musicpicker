@@ -7,6 +7,7 @@ var queue = require('./queue');
 var auth = require('socketio-auth');
 var Promise = require('bluebird');
 var models = require('./models');
+var metrics = require('./statsd').lynx;
 
 function deviceConnected(deviceId) {
   return new Promise(function(resolve, reject) {
@@ -232,6 +233,7 @@ function reportSubmissionStatus(socket, deviceId) {
 
 function hub(io, clientId, socket) {
   socket.on('RegisterDevice', function(deviceId) {
+    metrics.increment('hub.RegisterDevice.calls');
     new models.Device({
       Id: deviceId
     }).fetch().then(function(device) {
@@ -248,6 +250,7 @@ function hub(io, clientId, socket) {
   });
 
   socket.on('RegisterClient', function(data) {
+    metrics.increment('hub.RegisterClient.calls');
     var deviceId = data.DeviceId;
     new models.Device({
       Id: deviceId
@@ -271,6 +274,7 @@ function hub(io, clientId, socket) {
   });
 
   socket.on('Queue', function(data) {
+    metrics.increment('hub.Queue.calls');
     var deviceId = data.DeviceId;
     var trackIds = data.TrackIds.slice(0, 100);
 
@@ -302,6 +306,7 @@ function hub(io, clientId, socket) {
   });
 
   socket.on('GetState', function(deviceId) {
+    metrics.increment('hub.GetState.calls');
     checkRegistration(socket.id, deviceId, true).then(function() {
       createDeviceState(deviceId).then(function(state) {
         socket.emit('SetState', state);
@@ -312,6 +317,7 @@ function hub(io, clientId, socket) {
   });
 
   socket.on('Play', function(data) {
+    metrics.increment('hub.Play.calls');
     checkRegistration(socket.id, data.DeviceId).then(function() {
       play(io, socket, data.DeviceId);
     }).catch(function() {
@@ -320,6 +326,7 @@ function hub(io, clientId, socket) {
   });
 
   socket.on('Pause', function(data) {
+    metrics.increment('hub.Pause.calls');
     checkRegistration(socket.id, data.DeviceId).then(function() {
       var deviceId = data.DeviceId;
       Promise.all([
@@ -338,6 +345,7 @@ function hub(io, clientId, socket) {
   })
 
   socket.on('RequestNext', function(data) {
+    metrics.increment('hub.RequestNext.calls');
     checkRegistration(socket.id, data.DeviceId).then(function() {
       requestNext(io, socket, data.DeviceId);
     }).catch(function() {
@@ -346,6 +354,7 @@ function hub(io, clientId, socket) {
   });
 
   socket.on('Next', function(deviceId) {
+    metrics.increment('hub.Next.calls');
     checkRegistration(socket.id, deviceId).then(function() {
       tredis.llen('musichub.device.' + deviceId + '.queue').then(function(queueLen) {
         queueLen = parseInt(queueLen);
@@ -359,6 +368,7 @@ function hub(io, clientId, socket) {
   });
 
   socket.on('Clock', function(clientDate) {
+    metrics.increment('hub.Clock.calls');
     socket.emit('Clock', Date.now());
   })
 }
@@ -390,9 +400,11 @@ module.exports = function(io) {
   });
 
   io.on('connection', function(socket) {
+    metrics.increment('hub.connects');
     var clientId = socket.id;
     hub(io, clientId, socket);
     socket.on('disconnect', function(socket) {
+      metrics.increment('hub.disconnects');
       onDisconnect(io, socket, clientId);
     })
   })

@@ -11,7 +11,7 @@ var uuid = require('node-uuid');
 var ensureLoggedIn = require('connect-ensure-login').ensureLoggedIn;
 
 var models = require('../models');
-var statsd = require('../statsd');
+var statsd = require('../statsd').middleware;
 
 var server = oauth2orize.createServer();
 

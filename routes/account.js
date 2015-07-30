@@ -3,7 +3,7 @@ var router = express.Router();
 var passport = require('passport');
 var Promise = require('bluebird');
 var models = require('../models');
-var statsd = require('../statsd');
+var statsd = require('../statsd').middleware;
 
 function registerUser(username, password, confirm) {
   return new Promise(function(resolve, reject) {
