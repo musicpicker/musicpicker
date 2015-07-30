@@ -34,6 +34,7 @@ function mpStart(container) {
           <Route name="artist" path="artist/:artistId" handler={AlbumsView}/>
           <Route name="album" path="album/:albumId" handler={TracksView}/>
         </Route>
+        <Route name="device-rename" path="rename" handler={DeviceRename}/>
         <Route name="device-delete" path="delete" handler={DeviceDelete}/>
       </Route>
     </Route>

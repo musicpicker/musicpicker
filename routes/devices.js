@@ -61,7 +61,26 @@ router.get('/:id', statsd('device-detail'), function(req, res) {
   }).catch(function(err) {
     return res.sendStatus(404);
   });
-})
+});
+
+router.put('/:id', statsd('device-detail'), function(req, res) {
+  new models.Device({
+    Id: req.params['id'],
+    OwnerId: req.user.id
+  }).fetch().then(function(device) {
+    if (req.body['Name'] === undefined) {
+      return res.sendStatus(500);
+    }
+    else {
+      device.set({Name: req.body['Name']});
+      device.save().then(function(device) {
+        return res.json(device);
+      });
+    }
+  }).catch(function(err) {
+    return res.sendStatus(404);
+  });  
+});
 
 router.delete('/:id', statsd('device-detail'), function(req, res) {
   new models.Device({
