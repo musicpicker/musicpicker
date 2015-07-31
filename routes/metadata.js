@@ -11,6 +11,9 @@ router.get('/tracks', function(req, res) {
     Id: deviceId,
     OwnerId: req.user.id
   }).fetch().then(function(device) {
+  	if (device === null) {
+  		return res.sendStatus(404);
+  	}
     var request = knex.select('tracks.*').from('tracks').
       innerJoin('deviceTracks', 'tracks.Id', 'deviceTracks.TrackId').
       where('deviceTracks.DeviceId', req.query['device']).orderBy('tracks.Number');
@@ -51,6 +54,9 @@ router.get('/albums', function(req, res) {
     Id: deviceId,
     OwnerId: req.user.id
   }).fetch().then(function(device) {
+  	if (device === null) {
+  		return res.sendStatus(404);
+  	}
 	  var request = knex.select('albums.*').from('tracks').innerJoin('deviceTracks', 'tracks.Id', 'deviceTracks.TrackId').
 	    where('deviceTracks.DeviceId', req.query['device']).innerJoin('albums', 'tracks.AlbumId', 'albums.Id').
 	    distinct('albums.Id').orderBy('albums.Name');
@@ -90,6 +96,9 @@ router.get('/artists', statsd('meta-artists-list'), function(req, res) {
     Id: deviceId,
     OwnerId: req.user.id
   }).fetch().then(function(device) {
+  	if (device === null) {
+  		return res.sendStatus(404);
+  	}
 	  var request = knex.select('artists.*').from('tracks').innerJoin('deviceTracks', 'tracks.Id', 'deviceTracks.TrackId').
 	    where('deviceTracks.DeviceId', req.query['device']).innerJoin('albums', 'tracks.AlbumId', 'albums.Id').
 	    innerJoin('artists', 'albums.ArtistId', 'artists.Id').distinct('artists.Id').orderBy('artists.Name');
