@@ -59,7 +59,9 @@ var AlbumsView = React.createClass({
     },
 
     componentWillReceiveProps: function(nextProps) {
-        this.getMeta(nextProps.artistId);
+        if (nextProps.params.artistId !== this.props.params.artistId) {
+            this.getMeta(nextProps.params.artistId);
+        }
     },
 
     search: function() {

@@ -33,7 +33,9 @@ var TracksView = React.createClass({
     },
 
     componentWillReceiveProps: function(nextProps) {
-        this.getMeta(nextProps.albumId);
+        if (nextProps.params.albumId !== this.props.params.albumId) {
+            this.getMeta(nextProps.params.albumId);
+        }
     },
 
     search: function() {
