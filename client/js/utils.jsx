@@ -24,7 +24,7 @@
                 );
             }
             else {
-                if (this.props.filtered.length === 0) {
+                if (this.props.data.length === 0) {
                     return (
                         <div className="row">
                             <div className="col-xs-12">
