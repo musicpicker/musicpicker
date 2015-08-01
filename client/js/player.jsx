@@ -132,6 +132,7 @@ var Player = React.createClass({
 			return {
 				connected: flux.store('DeviceStateStore').devices[deviceId].connected,
 				playing: flux.store('DeviceStateStore').devices[deviceId].playing,
+				paused: flux.store('DeviceStateStore').devices[deviceId].paused,
 				current: flux.store('DeviceStateStore').devices[deviceId].current,
 				duration: flux.store('DeviceStateStore').devices[deviceId].duration
 			};
@@ -160,7 +161,7 @@ var Player = React.createClass({
 
 	render: function() {
 		if (this.state.current !== null) {
-			if (this.state.playing) {
+			if (!this.state.paused) {
 				var pause = <button type="button" className="btn btn-primary" onClick={this.pause}><span className="glyphicon glyphicon-pause"></span></button>;
 			}
 			else {

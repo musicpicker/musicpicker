@@ -385,7 +385,6 @@ function hub(io, clientId, socket) {
     checkRegistration(socket.id, data.DeviceId).then(function() {
       var deviceId = data.DeviceId;
       Promise.all([
-        tredis.set('musichub.device.' + deviceId + '.playing', 0),
         tredis.set('musichub.device.' + deviceId + '.paused', 1),
         updatePosition(deviceId)
       ]).then(function() {
