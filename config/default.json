@@ -22,7 +22,8 @@
   "queue": {
     "paralel": {
       "submissions": 5,
-      "artworks": 3
+      "artworks": 3,
+      "device-deletion": 1
     }
   }
 }

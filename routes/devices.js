@@ -89,7 +89,9 @@ router.delete('/:id', statsd('device-detail'), function(req, res) {
   }).fetch().then(function(device) {
     Promise.all([
       device.destroy(),
-      clearDeviceTracks(req.params['id'])
+      queue.create('device-deletion', {
+        deviceId: req.params['id']
+      }).save()
     ]).then(function() {
       res.sendStatus(204);
     }).catch(function() {
@@ -470,6 +472,12 @@ queue.process('submissions', config.get('queue.paralel.submissions'), function(j
 
 queue.process('artworks', config.get('queue.paralel.artworks'), function(job, done) {
   getArtwork(job.data.submission, job.data.albumId, done);
+});
+
+queue.process('device-deletion', config.get('queue.paralel.device-deletion'), function(job, done) {
+  clearDeviceTracks(job.data.deviceId).then(function() {
+    done();
+  });
 });
 
 module.exports = router;
