@@ -47,9 +47,11 @@ router.post('/api/account/register', statsd('account-register'), function(req, r
 });
 
 router.get('/login', statsd('login'), function(req, res) {
-  res.render('login');
+  res.render('login', {
+    failure: req.query['failure']
+  });
 });
-router.post('/login', passport.authenticate('local', { successReturnToOrRedirect: '/', failureRedirect: '/login' }));
+router.post('/login', passport.authenticate('local', { successReturnToOrRedirect: '/', failureRedirect: '/login?failure=true' }));
 
 router.get('/logout', statsd('logout'), function(req, res) {
   req.logout();

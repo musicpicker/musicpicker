@@ -4,6 +4,11 @@
     <div class="panel panel-primary">
       <div class="panel-body">
         <h3 class="text-center">Musicpicker</h3><br />
+        {{#if failure}}
+        <div class="alert alert-warning">
+          <b>Incorrect credentials.</b> Please enter a valid username/password combination.
+        </div>
+        {{/if}}
         <form method="post">
           <div class="form-group">
             <input type="text" class="form-control" name="username" placeholder="Username" />
