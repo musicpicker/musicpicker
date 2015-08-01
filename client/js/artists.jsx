@@ -30,8 +30,9 @@ var ArtistsView = React.createClass({
 
     getInitialState: function() {
         return {
-            artists: [],
+            artists: null,
             filtered: [],
+            error: false
         }
     },
 
@@ -42,6 +43,8 @@ var ArtistsView = React.createClass({
             }
         }).done(function(data) {
             this.setState({artists: data, filtered: data});
+        }.bind(this)).error(function(err) {
+            this.setState({error: true});
         }.bind(this));
     },
 
@@ -54,7 +57,8 @@ var ArtistsView = React.createClass({
     },
 
     render: function() {
-        return (
+       return (
+           <LibraryState error={this.state.error} data={this.state.artists} filtered={this.state.filtered}>
             <div>
                 <br />
                 <div className="row">
@@ -71,6 +75,7 @@ var ArtistsView = React.createClass({
                     }.bind(this))}
                 </div>
             </div>
-        )
+           </LibraryState>
+        );
     }
 });

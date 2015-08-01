@@ -3,8 +3,9 @@ var TracksView = React.createClass({
 
     getInitialState: function() {
         return {
-            tracks: [],
-            filtered: []
+            tracks: null,
+            filtered: [],
+            error: false
         }
     },
 
@@ -22,6 +23,8 @@ var TracksView = React.createClass({
             }
         }).done(function(data) {
             this.setState({tracks: data, filtered: data});
+        }.bind(this)).error(function(err) {
+            this.setState({error: true});
         }.bind(this));
     },
 
@@ -31,10 +34,6 @@ var TracksView = React.createClass({
 
     componentWillReceiveProps: function(nextProps) {
         this.getMeta(nextProps.albumId);
-    },
-
-    back: function() {
-        this.getFlux().actions.back();
     },
 
     search: function() {
@@ -61,22 +60,24 @@ var TracksView = React.createClass({
 
     render: function() {
         return (
-            <div>
-                <br />
-                <div className="row">
-                    <div className="col-sm-6">
-                        <input type="text" className="form-control" placeholder="Track search" ref="search" onInput={this.search}/>
+            <LibraryState error={this.state.error} data={this.state.tracks} filtered={this.state.filtered}>
+                <div>
+                    <br />
+                    <div className="row">
+                        <div className="col-sm-6">
+                            <input type="text" className="form-control" placeholder="Track search" ref="search" onInput={this.search}/>
+                        </div>
+                    </div>
+                    <br />
+                    <div className="list-group">
+                        {this.state.filtered.map(function(track, index) {
+                            return(
+                                <button key={index} onClick={this.select.bind(this, index)} type="button" className="list-group-item">{track.Name}</button>
+                            )
+                        }.bind(this))}
                     </div>
                 </div>
-                <br />
-                <div className="list-group">
-                    {this.state.filtered.map(function(track, index) {
-                        return(
-                            <button key={index} onClick={this.select.bind(this, index)} type="button" className="list-group-item">{track.Name}</button>
-                        )
-                    }.bind(this))}
-                </div>
-            </div>
+            </LibraryState>
         )
     }
 });

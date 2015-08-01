@@ -29,8 +29,9 @@ var AlbumsView = React.createClass({
 
     getInitialState: function() {
         return {
-            albums: [],
-            filtered: []
+            albums: null,
+            filtered: [],
+            error: false
         }
     },
 
@@ -48,6 +49,8 @@ var AlbumsView = React.createClass({
             }
         }).done(function(data) {
             this.setState({albums: data, filtered: data});
+        }.bind(this)).error(function(err) {
+            this.setState({error: true});
         }.bind(this));
     },
 
@@ -57,10 +60,6 @@ var AlbumsView = React.createClass({
 
     componentWillReceiveProps: function(nextProps) {
         this.getMeta(nextProps.artistId);
-    },
-
-    back: function() {
-        this.getFlux().actions.back();
     },
 
     search: function() {
@@ -73,22 +72,24 @@ var AlbumsView = React.createClass({
 
     render: function() {
         return (
-            <div>
-                <br />
-                <div className="row">
-                    <div className="col-sm-6">
-                        <input type="text" className="form-control" placeholder="Album search" ref="search" onInput={this.search}/>
+            <LibraryState error={this.state.error} data={this.state.albums} filtered={this.state.filtered}>
+                <div>
+                    <br />
+                    <div className="row">
+                        <div className="col-sm-6">
+                            <input type="text" className="form-control" placeholder="Album search" ref="search" onInput={this.search}/>
+                        </div>
+                    </div>
+                    <br />
+                    <div className="row">
+                    {this.state.filtered.map(function(album) {
+                        return(
+                            <AlbumItem key={album.Id} data={album} deviceId={this.props.params.id} />
+                        )
+                    }.bind(this))}
                     </div>
                 </div>
-                <br />
-                <div className="row">
-                {this.state.filtered.map(function(album) {
-                    return(
-                        <AlbumItem key={album.Id} data={album} deviceId={this.props.params.id} />
-                    )
-                }.bind(this))}
-                </div>
-            </div>
+            </LibraryState>
         )
     }
 });
