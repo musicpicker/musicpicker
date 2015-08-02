@@ -457,6 +457,11 @@ function postAuthenticate(socket, token) {
 }
 
 module.exports = function(io) {
+  io.adapter(require('socket.io-redis')({
+    host: config.get('redis.host'),
+    port: 6379
+  }));
+
   auth(io, {
     authenticate: authenticate,
     postAuthenticate: postAuthenticate
