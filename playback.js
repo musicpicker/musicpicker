@@ -117,6 +117,18 @@ Playback.prototype.play = function (deviceId) {
   }.bind(this));
 }
 
+Playback.prototype.pause = function(deviceId) {
+	return new Promise(function(resolve, reject) {
+		Promise.all([
+	    tredis.set('musichub.device.' + deviceId + '.paused', 1),
+	    this.updatePosition(deviceId)
+	  ]).then(function() {
+	  	this.emit('Pause', deviceId);
+	  	resolve();
+	  }.bind(this));
+	}.bind(this));
+}
+
 Playback.prototype.next = function (deviceId) {
   return new Promise(function(resolve, reject) {
     tredis.llen('musichub.device.' + deviceId + '.queue').then(function(queueLen) {
