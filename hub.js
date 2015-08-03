@@ -116,9 +116,46 @@ function reportSubmissionStatus(socket, deviceId) {
   redisChan.subscribe('submissions.' + deviceId + '.progress');
 }
 
+function deviceEvents(io, socket, connectionId) {
+  playback.on('Next', function(deviceId, trackId) {
+    if (trackId !== null) {
+      io.sockets.to(connectionId).emit('Stop');
+      io.sockets.to(connectionId).emit('SetTrackId', trackId);
+      io.sockets.to(connectionId).emit('Play');
+    }
+  });
+
+  playback.on('Play', function(deviceId) {
+    io.sockets.to(connectionId).emit('Play');
+  });
+
+  playback.on('RequestNext', function(deviceId) {
+    io.sockets.to(connectionId).emit('Stop');
+  });
+}
+
+function clientEvents(io, socket, connectionId) {
+  playback.on('Next', function(deviceId, trackId) {
+    playback.state(deviceId).then(function(state) {
+      io.sockets.to(connectionId).emit('SetState', state);
+    });
+  });
+
+  playback.on('Play', function(deviceId) {
+    playback.state(deviceId).then(function(state) {
+      io.sockets.to(connectionId).emit('SetState', state);
+    });
+  });
+
+  playback.on('RequestNext', function(deviceId) {
+    playback.state(deviceId).then(function(state) {
+      io.sockets.to(connectionId).emit('SetState', state);
+    });
+  });
+}
+
 function hub(io, clientId, socket) {
   socket.on('RegisterDevice', function(deviceId) {
-    console.log('REGISTER');
     var timer = metrics.createTimer('hub.RegisterDevice.response_time');
     metrics.increment('hub.RegisterDevice.calls');
     new models.Device({
@@ -135,6 +172,7 @@ function hub(io, clientId, socket) {
           tredis.set('musichub.device.' + deviceId + '.connection', clientId),
           sendClientState(io, socket, deviceId)
         ]).then(function() {
+          deviceEvents(io, socket, socket.id);
           timer.stop();
         });
       }
@@ -163,6 +201,7 @@ function hub(io, clientId, socket) {
           tredis.sadd('musichub.device.' + deviceId + '.clients', clientId),
           socket.join('device.' + deviceId)
         ]).then(function() {
+          clientEvents(io, socket, socket.id);
           socket.emit('ClientRegistered');
           reportSubmissionStatus(socket, deviceId);
           timer.stop();
@@ -192,26 +231,12 @@ function hub(io, clientId, socket) {
             tredis.get('musichub.device.' + deviceId + '.playing').then(function(playing) {
               if (Boolean(parseInt(playing))) {
                 console.log('PLAYING');
-                playback.requestNext(deviceId).then(function() {
-                  sendClientState(io, socket, data.DeviceId).then(function() {
-                    io.sockets.to(deviceClientId).emit('Stop');
-                  });
-                });
+                playback.requestNext(deviceId);
                 timer.stop();
               }
               else {
                 tredis.set('musichub.device.' + deviceId + '.playing', 0).then(function() {
-                  playback.next(deviceId).then(function(trackId) {
-                    if (trackId !== null) {
-                      io.sockets.to(deviceClientId).emit('Stop');
-                      io.sockets.to(deviceClientId).emit('SetTrackId', trackId);
-                      io.sockets.to(deviceClientId).emit('Play');
-                      sendClientState(io, socket, deviceId);
-                    }
-                    else {
-                      sendClientState(io, socket, deviceId);
-                    }
-                  })
+                  playback.next(deviceId);
                   timer.stop();
                 });
               }
@@ -243,11 +268,8 @@ function hub(io, clientId, socket) {
     var timer = metrics.createTimer('hub.Play.response_time');
     metrics.increment('hub.Play.calls');
     checkRegistration(socket.id, data.DeviceId).then(function(deviceClientId) {
-      playback.play(data.DeviceId).then(function() {
-        io.sockets.to(deviceClientId).emit('Play');
-        sendClientState(io, socket, data.DeviceId);
-        timer.stop();
-      });
+      playback.play(data.DeviceId);
+      timer.stop();
     }).catch(function() {
       socket.emit('DeviceNotFound', data.DeviceId);
       timer.stop();
@@ -279,11 +301,7 @@ function hub(io, clientId, socket) {
     var timer = metrics.createTimer('hub.RequestNext.response_time');
     metrics.increment('hub.RequestNext.calls');
     checkRegistration(socket.id, data.DeviceId).then(function(deviceClientId) {
-      playback.requestNext(data.DeviceId).then(function() {
-        sendClientState(io, socket, data.DeviceId).then(function() {
-          io.sockets.to(deviceClientId).emit('Stop');
-        });
-      });
+      playback.requestNext(data.DeviceId);
       timer.stop();
     }).catch(function() {
       socket.emit('DeviceNotFound', data.DeviceId);
@@ -295,18 +313,8 @@ function hub(io, clientId, socket) {
     var timer = metrics.createTimer('hub.Next.response_time');
     metrics.increment('hub.Next.calls');
     checkRegistration(socket.id, deviceId).then(function(deviceClientId) {
-      playback.next(deviceId).then(function(trackId) {
-        if (trackId !== null) {
-          io.sockets.to(deviceClientId).emit('Stop');
-          io.sockets.to(deviceClientId).emit('SetTrackId', trackId);
-          io.sockets.to(deviceClientId).emit('Play');
-          sendClientState(io, socket, deviceId);
-        }
-        else {
-          sendClientState(io, socket, deviceId); 
-        }
-        timer.stop();
-      });
+      playback.next(deviceId);
+      timer.stop();
     }).catch(function() {
       socket.emit('DeviceNotFound', deviceId);
       timer.stop();
