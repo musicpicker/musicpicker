@@ -8,40 +8,13 @@ var auth = require('socketio-auth');
 var Promise = require('bluebird');
 var models = require('./models');
 var metrics = require('./statsd').lynx;
+var Playback = new require('./playback');
+var playback = new Playback();
 
 function deviceConnected(deviceId) {
   return new Promise(function(resolve, reject) {
     tredis.exists('musichub.device.' + deviceId + '.connection').then(function(result) {
       resolve(Boolean(parseInt(result)));
-    });
-  });
-}
-
-function createDeviceState(deviceId) {
-  return new Promise(function(resolve, reject) {
-    Promise.props({
-      Connected: tredis.exists('musichub.device.' + deviceId + '.connection'),
-      Current: tredis.get('musichub.device.' + deviceId + '.current'),
-      Duration: tredis.get('musichub.device.' + deviceId + '.duration'),
-      Playing: tredis.get('musichub.device.' + deviceId + '.playing'),
-      Paused: tredis.get('musichub.device.' + deviceId + '.paused'),
-      FromTime: tredis.get('musichub.device.' + deviceId + '.fromtime'),
-      Position: tredis.get('musichub.device.' + deviceId + '.position'),
-      Queue: tredis.lrange('musichub.device.' + deviceId + '.queue', 0, -1)
-    }).then(function(result) {
-      resolve({
-        Device: deviceId,
-        Connected: Boolean(parseInt(result.Connected)),
-        Current: parseInt(result.Current),
-        Duration: parseInt(result.Duration),
-        Playing: Boolean(parseInt(result.Playing)),
-        Paused: Boolean(parseInt(result.Paused)),
-        FromTime: parseInt(result.FromTime),
-        Position: parseInt(result.Position),
-        Queue: result.Queue.map(function(item) {
-          return parseInt(item);
-        })
-      });
     });
   });
 }
@@ -70,7 +43,9 @@ function checkRegistration(clientId, deviceId, skipDevice) {
         }
         tredis.exists('musichub.device.' + deviceId + '.connection').then(function(exists) {
           if (Boolean(parseInt(exists))) {
-            resolve();
+            tredis.get('musichub.device.' + deviceId + '.connection').then(function(deviceClientId) {
+              resolve(deviceClientId);
+            });
           }
           else {
             reject();
@@ -86,133 +61,11 @@ function checkRegistration(clientId, deviceId, skipDevice) {
 
 function sendClientState(io, socket, deviceId) {
   return new Promise(function(resolve, reject) {
-    createDeviceState(deviceId).then(function(state) {
+    playback.state(deviceId).then(function(state) {
       io.sockets.to('device.' + deviceId).emit('SetState', state);
       resolve();
     });
   });
-}
-
-function updateState(deviceId) {
-  return new Promise(function(resolve, reject) {
-    Promise.props({
-      current: tredis.lpop('musichub.device.' + deviceId + '.queue'),
-      currentDeviceTrack: tredis.lpop('musichub.device.' + deviceId + '.queue.device'),
-    }).then(function(props) {
-      tredis.set('musichub.device.' + deviceId + '.current', props.current).then(function() {
-        new models.DeviceTrack({
-          DeviceId: deviceId,
-          TrackId: props.current
-        }).fetch().then(function(dt) {
-          tredis.set('musichub.device.' + deviceId + '.duration', dt.get('TrackDuration')).then(function() {
-            resolve(props.currentDeviceTrack);
-          })
-        });
-      });
-    })
-  });
-}
-
-function updatePosition(deviceId) {
-  return new Promise(function(resolve, reject) {
-    tredis.get('musichub.device.' + deviceId + '.position').then(function(currentPosition) {
-      tredis.get('musichub.device.' + deviceId + '.fromtime').then(function(fromTime) {
-        var newPosition = parseInt(currentPosition) + (Date.now() - parseInt(fromTime));
-        tredis.set('musichub.device.' + deviceId + '.position', newPosition).then(function() {
-          resolve();
-        });
-      });
-    });
-  });
-}
-
-function addTrackToQueue(deviceId, trackId) {
-  return new Promise(function(resolve, reject) {
-    new models.DeviceTrack({
-      DeviceId: deviceId,
-      TrackId: trackId
-    }).fetch().then(function(dt) {
-      var deviceTrackId = dt.get('DeviceTrackId');
-      Promise.all([
-        tredis.rpush('musichub.device.' + deviceId + '.queue', trackId),
-        tredis.rpush('musichub.device.' + deviceId + '.queue.device', deviceTrackId)
-      ]).then(function() {
-        resolve();
-      })
-    });
-  });
-}
-
-function requestNext(io, socket, deviceId) {
-  return new Promise(function(resolve, reject) {
-    tredis.set('musichub.device.' + deviceId + '.playing', 0).then(function() {
-      sendClientState(io, socket, deviceId).then(function() {
-        tredis.get('musichub.device.' + deviceId + '.connection').then(function(deviceClientId) {
-          io.sockets.to(deviceClientId).emit('Stop');
-          resolve();
-        });
-      });
-    });
-  });
-}
-
-function play(io, socket, deviceId) {
-  return new Promise(function(resolve, reject) {
-    tredis.get('musichub.device.' + deviceId + '.connection').then(function(deviceClientId) {
-      Promise.all([
-        tredis.set('musichub.device.' + deviceId + '.playing', 1),
-        tredis.set('musichub.device.' + deviceId + '.paused', 0),
-        tredis.set('musichub.device.' + deviceId + '.fromtime', Date.now())
-      ]).then(function() {
-        io.sockets.to(deviceClientId).emit('Play');
-        sendClientState(io, socket, deviceId).then(function() {
-          resolve();
-        });
-      });
-    });
-  });
-}
-
-function next(io, socket, deviceId) {
-  return new Promise(function(resolve, reject) {
-    tredis.get('musichub.device.' + deviceId + '.connection').then(function(deviceClientId) {
-      tredis.llen('musichub.device.' + deviceId + '.queue').then(function(queueLen) {
-        if (parseInt(queueLen) > 0) {
-          Promise.all([
-            tredis.set('musichub.device.' + deviceId + '.playing', 1),
-            tredis.set('musichub.device.' + deviceId + '.paused', 0)
-          ]).then(function() {
-            io.sockets.to(deviceClientId).emit('Stop');
-            updateState(deviceId).then(function(currentDeviceTrack) {
-              tredis.set('musichub.device.' + deviceId + '.fromtime', Date.now()).then(function() {
-                tredis.set('musichub.device.' + deviceId + '.position', 0).then(function() {
-                  io.sockets.to(deviceClientId).emit('SetTrackId', currentDeviceTrack);
-                  io.sockets.to(deviceClientId).emit('Play');
-                  sendClientState(io, socket, deviceId).then(function() {
-                    resolve();
-                  });
-                });
-              });
-            });
-          });
-        }
-        else {
-          Promise.all([
-            tredis.del('musichub.device.' + deviceId + '.current'),
-            tredis.del('musichub.device.' + deviceId + '.duration'),
-            tredis.del('musichub.device.' + deviceId + '.playing'),
-            tredis.del('musichub.device.' + deviceId + '.paused'),
-            tredis.del('musichub.device.' + deviceId + '.fromtime'),
-            tredis.del('musichub.device.' + deviceId + '.position'),
-            tredis.del('musichub.device.' + deviceId + '.queue'),
-            sendClientState(io, socket, deviceId)
-          ]).then(function() {
-            resolve();
-          });
-        }
-      });
-    })
-  });  
 }
 
 function onDisconnect(io, socket, clientId) {
@@ -265,6 +118,7 @@ function reportSubmissionStatus(socket, deviceId) {
 
 function hub(io, clientId, socket) {
   socket.on('RegisterDevice', function(deviceId) {
+    console.log('REGISTER');
     var timer = metrics.createTimer('hub.RegisterDevice.response_time');
     metrics.increment('hub.RegisterDevice.calls');
     new models.Device({
@@ -326,23 +180,38 @@ function hub(io, clientId, socket) {
     var deviceId = data.DeviceId;
     var trackIds = data.TrackIds.slice(0, 100);
 
-    checkRegistration(socket.id, deviceId).then(function() {
+    checkRegistration(socket.id, deviceId).then(function(deviceClientId) {
       Promise.all([
         tredis.del('musichub.device.' + deviceId + '.queue'),
         tredis.del('musichub.device.' + deviceId + '.queue.device')
       ]).then(function() {
         Promise.each(trackIds, function(trackId) {
-          return addTrackToQueue(deviceId, trackId);
+          return playback.addTrackToQueue(deviceId, trackId);
         }).then(function() {
           sendClientState(io, socket, deviceId).then(function() {
             tredis.get('musichub.device.' + deviceId + '.playing').then(function(playing) {
               if (Boolean(parseInt(playing))) {
-                requestNext(io, socket, deviceId);
+                console.log('PLAYING');
+                playback.requestNext(deviceId).then(function() {
+                  sendClientState(io, socket, data.DeviceId).then(function() {
+                    io.sockets.to(deviceClientId).emit('Stop');
+                  });
+                });
                 timer.stop();
               }
               else {
                 tredis.set('musichub.device.' + deviceId + '.playing', 0).then(function() {
-                  next(io, socket, deviceId);
+                  playback.next(deviceId).then(function(trackId) {
+                    if (trackId !== null) {
+                      io.sockets.to(deviceClientId).emit('Stop');
+                      io.sockets.to(deviceClientId).emit('SetTrackId', trackId);
+                      io.sockets.to(deviceClientId).emit('Play');
+                      sendClientState(io, socket, deviceId);
+                    }
+                    else {
+                      sendClientState(io, socket, deviceId);
+                    }
+                  })
                   timer.stop();
                 });
               }
@@ -360,7 +229,7 @@ function hub(io, clientId, socket) {
     var timer = metrics.createTimer('hub.GetState.response_time');
     metrics.increment('hub.GetState.calls');
     checkRegistration(socket.id, deviceId, true).then(function() {
-      createDeviceState(deviceId).then(function(state) {
+      playback.state(deviceId).then(function(state) {
         socket.emit('SetState', state);
         timer.stop();
       })
@@ -373,8 +242,10 @@ function hub(io, clientId, socket) {
   socket.on('Play', function(data) {
     var timer = metrics.createTimer('hub.Play.response_time');
     metrics.increment('hub.Play.calls');
-    checkRegistration(socket.id, data.DeviceId).then(function() {
-      play(io, socket, data.DeviceId).then(function() {
+    checkRegistration(socket.id, data.DeviceId).then(function(deviceClientId) {
+      playback.play(data.DeviceId).then(function() {
+        io.sockets.to(deviceClientId).emit('Play');
+        sendClientState(io, socket, data.DeviceId);
         timer.stop();
       });
     }).catch(function() {
@@ -390,7 +261,7 @@ function hub(io, clientId, socket) {
       var deviceId = data.DeviceId;
       Promise.all([
         tredis.set('musichub.device.' + deviceId + '.paused', 1),
-        updatePosition(deviceId)
+        playback.updatePosition(deviceId)
       ]).then(function() {
         sendClientState(io, socket, deviceId);
         tredis.get('musichub.device.' + deviceId + '.connection').then(function(deviceClientId) {
@@ -407,10 +278,13 @@ function hub(io, clientId, socket) {
   socket.on('RequestNext', function(data) {
     var timer = metrics.createTimer('hub.RequestNext.response_time');
     metrics.increment('hub.RequestNext.calls');
-    checkRegistration(socket.id, data.DeviceId).then(function() {
-      requestNext(io, socket, data.DeviceId).then(function() {
-        timer.stop();
-      })
+    checkRegistration(socket.id, data.DeviceId).then(function(deviceClientId) {
+      playback.requestNext(data.DeviceId).then(function() {
+        sendClientState(io, socket, data.DeviceId).then(function() {
+          io.sockets.to(deviceClientId).emit('Stop');
+        });
+      });
+      timer.stop();
     }).catch(function() {
       socket.emit('DeviceNotFound', data.DeviceId);
       timer.stop();
@@ -420,8 +294,17 @@ function hub(io, clientId, socket) {
   socket.on('Next', function(deviceId) {
     var timer = metrics.createTimer('hub.Next.response_time');
     metrics.increment('hub.Next.calls');
-    checkRegistration(socket.id, deviceId).then(function() {
-      next(io, socket, deviceId).then(function() {
+    checkRegistration(socket.id, deviceId).then(function(deviceClientId) {
+      playback.next(deviceId).then(function(trackId) {
+        if (trackId !== null) {
+          io.sockets.to(deviceClientId).emit('Stop');
+          io.sockets.to(deviceClientId).emit('SetTrackId', trackId);
+          io.sockets.to(deviceClientId).emit('Play');
+          sendClientState(io, socket, deviceId);
+        }
+        else {
+          sendClientState(io, socket, deviceId); 
+        }
         timer.stop();
       });
     }).catch(function() {
