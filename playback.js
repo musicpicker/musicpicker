@@ -3,10 +3,6 @@ var events = require('events');
 var config = require('config');
 var redis = require('redis-scanstreams')(require('redis')).createClient(6379, config.get('redis.host'));
 var tredis = require('then-redis').createClient(config.get('redis'));
-var redisChan = require('redis').createClient(6379, config.get('redis.host'));
-var kue = require('kue');
-var queue = require('./queue');
-var auth = require('socketio-auth');
 var Promise = require('bluebird');
 var models = require('./models');
 
@@ -163,6 +159,32 @@ Playback.prototype.next = function (deviceId) {
       }
     }.bind(this));
   }.bind(this));  
+}
+
+Playback.prototype.queue = function(deviceId, trackIds) {
+	return new Promise(function(resolve, reject) {
+		Promise.all([
+		  tredis.del('musichub.device.' + deviceId + '.queue'),
+		  tredis.del('musichub.device.' + deviceId + '.queue.device')
+		]).then(function() {
+		  Promise.each(trackIds, function(trackId) {
+		    return this.addTrackToQueue(deviceId, trackId);
+		  }.bind(this)).then(function() {
+	      tredis.get('musichub.device.' + deviceId + '.playing').then(function(playing) {
+	        if (Boolean(parseInt(playing))) {
+	          this.requestNext(deviceId);
+	          resolve();
+	        }
+	        else {
+	          tredis.set('musichub.device.' + deviceId + '.playing', 0).then(function() {
+	            this.next(deviceId);
+	            resolve();
+	          }.bind(this));
+	        }
+	      }.bind(this));
+		  }.bind(this));
+		}.bind(this));
+	}.bind(this));
 }
 
 module.exports = Playback;

@@ -11,14 +11,6 @@ var metrics = require('./statsd').lynx;
 var Playback = new require('./playback');
 var playback = new Playback();
 
-function deviceConnected(deviceId) {
-  return new Promise(function(resolve, reject) {
-    tredis.exists('musichub.device.' + deviceId + '.connection').then(function(result) {
-      resolve(Boolean(parseInt(result)));
-    });
-  });
-}
-
 function isRegistered(clientId, deviceId) {
   return new Promise(function(resolve, reject) {
     tredis.get('musichub.device.' + deviceId + '.connection').then(function(deviceConnection) {
@@ -230,30 +222,7 @@ function hub(io, clientId, socket) {
     var trackIds = data.TrackIds.slice(0, 100);
 
     checkRegistration(socket.id, deviceId).then(function(deviceClientId) {
-      Promise.all([
-        tredis.del('musichub.device.' + deviceId + '.queue'),
-        tredis.del('musichub.device.' + deviceId + '.queue.device')
-      ]).then(function() {
-        Promise.each(trackIds, function(trackId) {
-          return playback.addTrackToQueue(deviceId, trackId);
-        }).then(function() {
-          sendClientState(io, socket, deviceId).then(function() {
-            tredis.get('musichub.device.' + deviceId + '.playing').then(function(playing) {
-              if (Boolean(parseInt(playing))) {
-                console.log('PLAYING');
-                playback.requestNext(deviceId);
-                timer.stop();
-              }
-              else {
-                tredis.set('musichub.device.' + deviceId + '.playing', 0).then(function() {
-                  playback.next(deviceId);
-                  timer.stop();
-                });
-              }
-            });
-          })
-        });
-      });
+      playback.queue(deviceId, trackIds);
     }).catch(function() {
       socket.emit('DeviceNotFound', deviceId);
       timer.stop();
