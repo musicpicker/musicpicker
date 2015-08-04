@@ -2,15 +2,35 @@ var util = require('util');
 var events = require('events');
 var config = require('config');
 var redis = require('redis-scanstreams')(require('redis')).createClient(6379, config.get('redis.host'));
+var redisChan = require('redis').createClient(6379, config.get('redis.host'));
 var tredis = require('then-redis').createClient(config.get('redis'));
 var Promise = require('bluebird');
 var models = require('./models');
 
 function Playback() {
-
+	this.dispatch();
+	redisChan.subscribe('musicpicker.playback');
 }
 
 util.inherits(Playback, events.EventEmitter);
+
+Playback.prototype.dispatch = function() {
+	redisChan.on('message', function(channel, message) {
+		if (channel !== 'musicpicker.playback') {
+			return;
+		}
+		var message = JSON.parse(message);
+		this.emit(message.Event, message.Device, message.Options);
+	}.bind(this));
+};
+
+Playback.prototype.publish = function(eventName, deviceId, opts) {
+	redis.publish('musicpicker.playback', JSON.stringify({
+		Device: deviceId,
+		Event: eventName,
+		Options: opts
+	}));
+};
 
 Playback.prototype.state = function (deviceId) {
   return new Promise(function(resolve, reject) {
@@ -94,7 +114,7 @@ Playback.prototype.addTrackToQueue = function (deviceId, trackId) {
 Playback.prototype.requestNext = function (deviceId) {
   return new Promise(function(resolve, reject) {
     tredis.set('musichub.device.' + deviceId + '.playing', 0).then(function() {
-    	this.emit('RequestNext', deviceId);
+    	this.publish('RequestNext', deviceId);
     	resolve();
     }.bind(this));
   }.bind(this));
@@ -107,7 +127,7 @@ Playback.prototype.play = function (deviceId) {
       tredis.set('musichub.device.' + deviceId + '.paused', 0),
       tredis.set('musichub.device.' + deviceId + '.fromtime', Date.now())
     ]).then(function() {
-    	this.emit('Play', deviceId);
+    	this.publish('Play', deviceId);
     	resolve();
     }.bind(this));
   }.bind(this));
@@ -119,7 +139,7 @@ Playback.prototype.pause = function(deviceId) {
 	    tredis.set('musichub.device.' + deviceId + '.paused', 1),
 	    this.updatePosition(deviceId)
 	  ]).then(function() {
-	  	this.emit('Pause', deviceId);
+	  	this.publish('Pause', deviceId);
 	  	resolve();
 	  }.bind(this));
 	}.bind(this));
@@ -136,7 +156,7 @@ Playback.prototype.next = function (deviceId) {
           this.updateState(deviceId).then(function(currentDeviceTrack) {
             tredis.set('musichub.device.' + deviceId + '.fromtime', Date.now()).then(function() {
               tredis.set('musichub.device.' + deviceId + '.position', 0).then(function() {
-              	this.emit('Next', deviceId, currentDeviceTrack);
+              	this.publish('Next', deviceId, currentDeviceTrack);
                 resolve(currentDeviceTrack);
               }.bind(this));
             }.bind(this));
@@ -153,7 +173,7 @@ Playback.prototype.next = function (deviceId) {
           tredis.del('musichub.device.' + deviceId + '.position'),
           tredis.del('musichub.device.' + deviceId + '.queue')
         ]).then(function() {
-        	this.emit('Next', deviceId, null);
+        	this.publish('Next', deviceId, null);
           resolve(null);
         }.bind(this));
       }
