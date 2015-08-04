@@ -155,25 +155,27 @@ var AuthStore = Fluxxor.createStore({
 
     startDevices: function(bearer) {
       socket.on('connect', function() {
-        socket.emit('authentication', 'session');
-        socket.on('authenticated', function() {
-          socket.on('SetState', function(state) {
-            flux.actions.receiveDeviceState(state);
-          });
+        jQuery.ajax('/socket-token').done(function(token) {
+          socket.emit('authentication', token);
+          socket.on('authenticated', function() {
+            socket.on('SetState', function(state) {
+              flux.actions.receiveDeviceState(state);
+            });
 
-          socket.on('Submission', function(state) {
-            flux.actions.receiveSubmissionState(state);
-          });
+            socket.on('Submission', function(state) {
+              flux.actions.receiveSubmissionState(state);
+            });
 
-          jQuery.ajax('/api/Devices').done(function(devices) {
-            devices.forEach(function(device) {
-              socket.on('ClientRegistered', function() {
-                socket.emit('GetState', device.Id);
+            jQuery.ajax('/api/Devices').done(function(devices) {
+              devices.forEach(function(device) {
+                socket.on('ClientRegistered', function() {
+                  socket.emit('GetState', device.Id);
+                }.bind(this));
+                socket.emit('RegisterClient', {DeviceId: device.Id});
               }.bind(this));
-              socket.emit('RegisterClient', {DeviceId: device.Id});
             }.bind(this));
           }.bind(this));
-        }.bind(this));
+        })
       }.bind(this));
       
       this.emit('change');

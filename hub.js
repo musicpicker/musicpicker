@@ -5,6 +5,7 @@ var redisChan = require('redis').createClient(6379, config.get('redis.host'));
 var kue = require('kue');
 var queue = require('./queue');
 var auth = require('socketio-auth');
+var jwt = require('jsonwebtoken');
 var Promise = require('bluebird');
 var models = require('./models');
 var metrics = require('./statsd').lynx;
@@ -303,22 +304,47 @@ function hub(io, clientId, socket) {
 }
 
 function authenticate(token, callback) {
-  new models.User({
-    Token: token
-  }).fetch().then(function(user) {
-    return callback(null, true);
-  }).catch(function(err) {
-    return callback(new Error('Invalid authentication token'));
-  });
+  jwt.verify(token, config.get('secret'), function(err, payload) {
+    if (err === null) {
+      console.log('OK SESSION');
+      return callback(null, true);
+    }
+    else {
+      new models.User({
+        Token: token
+      }).fetch().then(function(user) {
+        if (user !== null) {
+          console.log('OK OAUTH');
+          return callback(null, true);
+        }
+        else {
+          return callback(new Error('Invalid authentication token'));
+        }
+      }).catch(function(err) {
+        return callback(new Error('Authentication failed'));
+      });
+    }
+  })
 }
 
 function postAuthenticate(socket, token) {
-  new models.User({
-    Token: token
-  }).fetch().then(function(user) {
-    socket.client.user = user;
-  }).catch(function(err) {
-    return callback(new Error('Invalid authentication token'));
+  jwt.verify(token, config.get('secret'), function(err, payload) {
+    if (err === null) {
+      new models.User({
+        Id: payload
+      }).fetch().then(function(user) {
+        console.log('POST SESSION');
+        socket.client.user = user;
+      })
+    }
+    else {
+      new models.User({
+        Token: token
+      }).fetch().then(function(user) {
+        console.log('POST OAUTH');
+        socket.client.user = user;
+      });
+    }
   });
 }
 

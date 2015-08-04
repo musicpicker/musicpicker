@@ -1,9 +1,11 @@
+var config = require('config');
 var express = require('express');
 var router = express.Router();
 var passport = require('passport');
 var Promise = require('bluebird');
 var models = require('../models');
 var statsd = require('../statsd').middleware;
+var jwt = require('jsonwebtoken');
 
 function registerUser(username, password, confirm) {
   return new Promise(function(resolve, reject) {
@@ -76,5 +78,15 @@ router.post('/signup', statsd('account-signup'),
   },
   passport.authenticate('local', { successReturnToOrRedirect: '/', failureRedirect: '/login' })
 );
+
+router.get('/socket-token', passport.authenticate('session'), function(req, res, next) {
+  if (req.isAuthenticated()) {
+    var token = jwt.sign(req.user.id, config.get('secret'));
+    res.send(token);
+  }
+  else {
+    res.sendStatus(401);
+  }
+});
 
 module.exports = router;
