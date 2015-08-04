@@ -30,17 +30,11 @@ var TrackInfo = React.createClass({
 	},
 
 	getMeta: function(trackId) {
-		var options = {
-			headers: {
-				'Authorization': 'Bearer ' + this.getFlux().store('AuthStore').bearer
-			}
-		};
-
-		jQuery.ajax('/api/Tracks/' + trackId, options).done(function(track) {
+		jQuery.ajax('/api/Tracks/' + trackId).done(function(track) {
 			this.setState({title: track.Name});
-			jQuery.ajax('/api/Albums/' + track.AlbumId, options).done(function(album) {
+			jQuery.ajax('/api/Albums/' + track.AlbumId).done(function(album) {
 				this.setState({image: album.Artwork});
-				jQuery.ajax('/api/Artists/' + album.ArtistId, options).done(function(artist) {
+				jQuery.ajax('/api/Artists/' + album.ArtistId).done(function(artist) {
 					this.setState({artist: artist.Name});
 				}.bind(this));
 			}.bind(this));

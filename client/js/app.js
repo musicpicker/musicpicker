@@ -155,7 +155,7 @@ var AuthStore = Fluxxor.createStore({
 
     startDevices: function(bearer) {
       socket.on('connect', function() {
-        socket.emit('authentication', bearer);
+        socket.emit('authentication', 'session');
         socket.on('authenticated', function() {
           socket.on('SetState', function(state) {
             flux.actions.receiveDeviceState(state);
@@ -165,11 +165,7 @@ var AuthStore = Fluxxor.createStore({
             flux.actions.receiveSubmissionState(state);
           });
 
-          jQuery.ajax('/api/Devices', {
-              headers: {
-                  'Authorization': 'Bearer ' + bearer
-              }
-          }).done(function(devices) {
+          jQuery.ajax('/api/Devices').done(function(devices) {
             devices.forEach(function(device) {
               socket.on('ClientRegistered', function() {
                 socket.emit('GetState', device.Id);

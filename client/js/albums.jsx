@@ -43,11 +43,7 @@ var AlbumsView = React.createClass({
             var url = "/api/Albums?device=" + this.props.params.id + "&artist=" + artistId;
         }
 
-        jQuery.ajax(url, {
-            headers: {
-                'Authorization': 'Bearer ' + this.getFlux().store('AuthStore').bearer
-            }
-        }).done(function(data) {
+        jQuery.ajax(url).done(function(data) {
             this.setState({albums: data, filtered: data});
         }.bind(this)).error(function(err) {
             this.setState({error: true});

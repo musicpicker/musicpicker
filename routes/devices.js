@@ -17,7 +17,15 @@ var queue = require('../queue');
 var statsd = require('../statsd').middleware;
 var metrics = require('../statsd').lynx;
 
-router.use(passport.authenticate('bearer', {session: false}));
+router.use(passport.authenticate(['bearer', 'session']));
+router.use(function(req, res, next) {
+  if (req.isAuthenticated()) {
+    next();
+  }
+  else {
+    res.sendStatus(401);
+  }
+});
 
 router.get('/', function(req, res) {
   if (req.query['name'] === undefined) {

@@ -57,11 +57,7 @@ var Devices = React.createClass({
 	},
 
 	componentDidMount: function() {
-      jQuery.ajax('/api/Devices', {
-          headers: {
-              'Authorization': 'Bearer ' + this.getFlux().store('AuthStore').bearer
-          }
-      }).done(function(data) {
+      jQuery.ajax('/api/Devices').done(function(data) {
           this.setState({devices: data});
       }.bind(this));
 	},

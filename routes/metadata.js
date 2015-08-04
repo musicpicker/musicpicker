@@ -3,6 +3,17 @@ var router = express.Router();
 var models = require('../models');
 var knex = require('../knex');
 var statsd = require('../statsd').middleware;
+var passport = require('passport');
+
+router.use(passport.authenticate(['bearer', 'session']));
+router.use(function(req, res, next) {
+	if (req.isAuthenticated()) {
+		next();
+	}
+	else {
+		res.sendStatus(401);
+	}
+});
 
 router.get('/tracks', function(req, res) {
   var deviceId = req.query['device'];

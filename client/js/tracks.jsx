@@ -17,11 +17,7 @@ var TracksView = React.createClass({
             var url = "/api/Tracks?device=" + this.props.params.id + "&album=" + albumId;
         }
 
-        jQuery.ajax(url, {
-            headers: {
-                'Authorization': 'Bearer ' + this.getFlux().store('AuthStore').bearer
-            }
-        }).done(function(data) {
+        jQuery.ajax(url).done(function(data) {
             this.setState({tracks: data, filtered: data});
         }.bind(this)).error(function(err) {
             this.setState({error: true});

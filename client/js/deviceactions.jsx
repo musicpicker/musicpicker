@@ -3,10 +3,7 @@ var DeviceDelete = React.createClass({
 
 	delete: function() {
 		jQuery.ajax('/api/Devices/' + this.props.params.id, {
-			method: 'DELETE',
-			headers: {
-          'Authorization': 'Bearer ' + this.getFlux().store('AuthStore').bearer
-      }
+			method: 'DELETE'
 		}).done(function() {
 			this.transitionTo('devices');
 		}.bind(this));
@@ -32,9 +29,6 @@ var DeviceRename = React.createClass({
 		var name = $(React.findDOMNode(this.refs.name)).val();
 		jQuery.ajax('/api/Devices/' + this.props.params.id, {
 			method: 'PUT',
-			headers: {
-          'Authorization': 'Bearer ' + this.getFlux().store('AuthStore').bearer
-      },
       data: {
       	Name: name
       }

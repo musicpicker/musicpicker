@@ -2,7 +2,6 @@ var express = require('express');
 var errorHandler = require('express-error-handler')
 var exphbs  = require('express-handlebars');
 var path = require('path');
-var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
@@ -11,6 +10,7 @@ var cookieSession = require('cookie-session')
 var config = require('config');
 
 var passport = require('passport');
+var ensureLoggedIn = require('connect-ensure-login').ensureLoggedIn;
 
 var auth = require('./routes/oauth');
 var account = require('./routes/account');
@@ -29,8 +29,6 @@ app.use(expressStatsd({
 	client: new lynx(config.get('statsd.host'), config.get('statsd.port'))
 }));
 
-// uncomment after placing your favicon in /public
-//app.use(favicon(__dirname + '/public/favicon.ico'));
 app.use(logger('dev'));
 app.use(bodyParser.json({limit: '10mb'}));
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -49,7 +47,11 @@ app.use('/oauth', auth);
 app.use('/api/devices', devices);
 app.use('/api', metadata);
 
-app.get('*', statsd('home'),
+app.get('/favicon.ico', function(req, res) {
+	res.sendStatus(404);
+});
+
+app.get('*', ensureLoggedIn('/login'), statsd('home'),
   function(req, res) {
   res.render('home');
 });

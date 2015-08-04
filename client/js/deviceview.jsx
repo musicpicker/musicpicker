@@ -39,11 +39,7 @@ var DeviceView = React.createClass({
     },
 
     componentDidMount: function() {
-      jQuery.ajax('/api/Devices/' + this.props.params.id, {
-          headers: {
-              'Authorization': 'Bearer ' + this.getFlux().store('AuthStore').bearer
-          }
-      }).done(function(data) {
+      jQuery.ajax('/api/Devices/' + this.props.params.id).done(function(data) {
         this.setState({name: data.Name});
       }.bind(this));
     },
