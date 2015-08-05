@@ -304,9 +304,11 @@ function hub(io, clientId, socket) {
 }
 
 function authenticate(token, callback) {
-  jwt.verify(token, config.get('secret'), function(err, payload) {
+  jwt.verify(token, config.get('secret'), {
+    audience: 'hub',
+    issuer: 'socket-token'
+  }, function(err, payload) {
     if (err === null) {
-      console.log('OK SESSION');
       return callback(null, true);
     }
     else {
@@ -314,7 +316,6 @@ function authenticate(token, callback) {
         Token: token
       }).fetch().then(function(user) {
         if (user !== null) {
-          console.log('OK OAUTH');
           return callback(null, true);
         }
         else {
@@ -328,12 +329,14 @@ function authenticate(token, callback) {
 }
 
 function postAuthenticate(socket, token) {
-  jwt.verify(token, config.get('secret'), function(err, payload) {
+  jwt.verify(token, config.get('secret'), {
+    audience: 'hub',
+    issuer: 'socket-token'
+  }, function(err, payload) {
     if (err === null) {
       new models.User({
-        Id: payload
+        Id: payload.deviceId
       }).fetch().then(function(user) {
-        console.log('POST SESSION');
         socket.client.user = user;
       })
     }
@@ -341,7 +344,6 @@ function postAuthenticate(socket, token) {
       new models.User({
         Token: token
       }).fetch().then(function(user) {
-        console.log('POST OAUTH');
         socket.client.user = user;
       });
     }

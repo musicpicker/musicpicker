@@ -81,7 +81,11 @@ router.post('/signup', statsd('account-signup'),
 
 router.get('/socket-token', passport.authenticate('session'), function(req, res, next) {
   if (req.isAuthenticated()) {
-    var token = jwt.sign(req.user.id, config.get('secret'));
+    var token = jwt.sign({deviceId: req.user.id}, config.get('secret'), {
+      audience: 'hub',
+      issuer: 'socket-token',
+      expiresInSeconds: 30
+    });
     res.send(token);
   }
   else {
