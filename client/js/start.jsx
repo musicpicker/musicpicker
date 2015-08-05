@@ -1,27 +1,6 @@
 function mpStart(container) {
-	if (flux.store('AuthStore').bearer === null) {
-  	React.render(React.createElement(Login), $('#app')[0]);
-  }
-
-  if (localStorage.bearer === undefined) {
-    try {
-      var access_token = location.hash.split('#access_token=')[1].split('&')[0];
-      location.hash = '';
-      localStorage.bearer = access_token;
-
-      flux.actions.signIn(access_token);
-      window.socket = io(window.location.origin);
-      flux.actions.startDevices(access_token);
-    }
-    catch (ex) {
-      window.location = location.origin + '/oauth/authorize?response_type=token&redirect_uri=' + location.href
-    }
-  }
-  else {
-    flux.actions.signIn(localStorage.bearer);
-    window.socket = io(window.location.origin);
-    flux.actions.startDevices(localStorage.bearer);
-  }
+  window.socket = io(window.location.origin);
+  flux.actions.startDevices();
 
   var routes = (
     <Route handler={View}>
@@ -40,9 +19,7 @@ function mpStart(container) {
     </Route>
   );
 
-	if (flux.store('AuthStore').bearer !== null) {
-		ReactRouter.run(routes, ReactRouter.HistoryLocation, function(Root) {
-			React.render(React.createElement(Root, {flux: flux}), container);
-		});
-	}
+	ReactRouter.run(routes, ReactRouter.HistoryLocation, function(Root) {
+		React.render(React.createElement(Root, {flux: flux}), container);
+	});
 };

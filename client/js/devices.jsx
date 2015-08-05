@@ -63,7 +63,6 @@ var Devices = React.createClass({
 	},
 
   logout: function() {
-    localStorage.removeItem('bearer');
     window.location.pathname = '/logout';
   },
 

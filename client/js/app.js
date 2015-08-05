@@ -29,12 +29,8 @@ var actions = {
         this.dispatch('PLAYER_NEXT', deviceId);
     },
 
-    startDevices: function(bearer) {
-        this.dispatch('DEVICES_START', bearer);
-    },
-
-    signIn: function(bearer) {
-        this.dispatch('AUTH_SIGNIN', bearer);
+    startDevices: function() {
+        this.dispatch('DEVICES_START');
     },
 
     receiveSubmissionState: function(state) {
@@ -141,19 +137,11 @@ var DeviceStateStore = Fluxxor.createStore({
 });
 
 var AuthStore = Fluxxor.createStore({
-    bearer: null,
-
     actions: {
-        'AUTH_SIGNIN': 'signIn',
         'DEVICES_START': 'startDevices'
     },
 
-    signIn: function(bearer) {
-      this.bearer = bearer;
-      this.emit('change');
-    },
-
-    startDevices: function(bearer) {
+    startDevices: function() {
       socket.on('connect', function() {
         jQuery.ajax('/socket-token').done(function(token) {
           socket.emit('authentication', token);
