@@ -12,17 +12,29 @@ var Device = bookshelf.Model.extend({
 
 var Artist = bookshelf.Model.extend({
   tableName: 'artists',
-  idAttribute: 'Id'
+  idAttribute: 'Id',
+  albums: function() {
+    return this.hasMany(Album, 'ArtistId');
+  }
 });
 
 var Album = bookshelf.Model.extend({
   tableName: 'albums',
-  idAttribute: 'Id'
+  idAttribute: 'Id',
+  artist: function() {
+    return this.belongsTo(Artist, 'ArtistId');
+  },
+  tracks: function() {
+    return this.hasMany(Track, 'AlbumId');
+  }
 });
 
 var Track = bookshelf.Model.extend({
   tableName: 'tracks',
-  idAttribute: 'Id'
+  idAttribute: 'Id',
+  album: function() {
+    return this.belongsTo(Album, 'AlbumId');
+  }
 });
 
 var DeviceTrack = bookshelf.Model.extend({

@@ -53,7 +53,7 @@ router.get('/tracks', function(req, res) {
 router.get('/tracks/:id', statsd('meta-tracks-detail'), function(req, res) {
   new models.Track({
     Id: req.params['id']
-  }).fetch().then(function(track) {
+  }).fetch({withRelated: ['album', 'album.artist']}).then(function(track) {
     res.json(track);
   });
 });
