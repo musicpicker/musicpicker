@@ -36,8 +36,9 @@ app.use(cookieParser());
 app.use('/static', express.static(path.join(__dirname, 'static')));
 
 app.use(cookieSession({
-  'name': 'session',
-  'keys': [config.get('secret')]
+  name: 'session',
+  keys: [config.get('secret')],
+  maxAge: 15 * 24 * 3600 * 1000
 }));
 app.use(passport.initialize());
 app.use(passport.session());
