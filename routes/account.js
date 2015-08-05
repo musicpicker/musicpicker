@@ -6,6 +6,8 @@ var Promise = require('bluebird');
 var models = require('../models');
 var statsd = require('../statsd').middleware;
 var jwt = require('jsonwebtoken');
+var ensureLoggedIn = require('connect-ensure-login').ensureLoggedIn;
+var crypto = require('crypto');
 
 function registerUser(username, password, confirm) {
   return new Promise(function(resolve, reject) {
@@ -88,6 +90,44 @@ router.post('/signup', statsd('account-signup'),
     });
   },
   passport.authenticate('local', { successReturnToOrRedirect: '/', failureRedirect: '/login' })
+);
+
+router.get('/password', statsd('account-password'), 
+  ensureLoggedIn('/login'),
+  function(req, res) {
+    res.render('password', {
+      errors: req.flash('error')
+    });
+  }
+);
+
+router.post('/password', statsd('account-password'),
+  ensureLoggedIn('/login'),
+  function(req, res) {
+    var current = crypto.createHash('sha256').update(req.body['password']).digest('hex');
+    if (req.user.get('Password') !== current) {
+      req.flash('error', 'Invalid current password');
+      return res.redirect('/password');
+    }
+
+    if (req.body['new_password'] < 6) {
+      req.flash('error', 'Password too short');
+      return res.redirect('/password');
+    }
+
+    if (req.body['new_password'] !== req.body['confirm_new']) {
+      req.flash('error', 'Password confirmation doesn\'t match wanted password');
+      return res.redirect('/password');
+    }
+
+    var new_password = crypto.createHash('sha256').update(req.body['new_password']).digest('hex');
+    req.user.set({Password: new_password}).save().then(function() {
+      return res.redirect('/');
+    }).catch(function() {
+      req.flash('error', 'Unknown error');
+      return res.redirect('/password');
+    });
+  }
 );
 
 router.get('/socket-token', passport.authenticate('session'), function(req, res, next) {

@@ -93,6 +93,8 @@ var Devices = React.createClass({
               {devices}
 
               <div className="text-right">
+                <a className="className btn btn-default" href="/password">Password change</a>
+                &nbsp;&nbsp;&nbsp;
                 <button className="btn btn-danger" onClick={this.logout}>Log out</button>
               </div>
             </div>
