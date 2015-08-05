@@ -1,12 +1,12 @@
 var Submission = React.createClass({
-  mixins: [FluxMixin, StoreWatchMixin('DeviceStateStore')],
+  mixins: [FluxMixin, StoreWatchMixin('DeviceSubmissionStore')],
 
   getStateFromFlux: function() {
     var flux = this.getFlux();
     var deviceId = this.props.deviceId;
     return {
-      submission_processing: flux.store('DeviceStateStore').submissions[deviceId].processing,
-      submission_progress: flux.store('DeviceStateStore').submissions[deviceId].progress
+      submission_processing: flux.store('DeviceSubmissionStore').submissions[deviceId].processing,
+      submission_progress: flux.store('DeviceSubmissionStore').submissions[deviceId].progress
     }
   },
 

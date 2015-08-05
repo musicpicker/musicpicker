@@ -13,7 +13,7 @@ var DeviceLibrary = React.createClass({
   }
 })
 var DeviceView = React.createClass({
-    mixins: [FluxMixin, StoreWatchMixin('DeviceStateStore'), Navigation],
+    mixins: [FluxMixin, StoreWatchMixin('DeviceSubmissionStore'), Navigation],
 
     getInitialState: function() {
       return {
@@ -24,10 +24,10 @@ var DeviceView = React.createClass({
     getStateFromFlux: function() {
       var flux = this.getFlux();
       var deviceId = this.props.params.id;
-      if (flux.store('DeviceStateStore').submissions[deviceId] !== undefined) {
+      if (flux.store('DeviceSubmissionStore').submissions[deviceId] !== undefined) {
         return {
-          submission_processing: flux.store('DeviceStateStore').submissions[deviceId].processing,
-          submission_progress: flux.store('DeviceStateStore').submissions[deviceId].progress
+          submission_processing: flux.store('DeviceSubmissionStore').submissions[deviceId].processing,
+          submission_progress: flux.store('DeviceSubmissionStore').submissions[deviceId].progress
         }
       }
       else {

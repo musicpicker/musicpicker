@@ -144,12 +144,6 @@ function clientEvents(io, socket, connectionId) {
     });
   });
 
-  playback.on('RequestNext', function(deviceId) {
-    playback.state(deviceId).then(function(state) {
-      io.sockets.to(connectionId).emit('SetState', state);
-    });
-  });
-
   playback.on('Pause', function(deviceId) {
     playback.state(deviceId).then(function(state) {
       io.sockets.to(connectionId).emit('SetState', state);

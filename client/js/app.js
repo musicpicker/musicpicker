@@ -38,13 +38,24 @@ var actions = {
     }
 };
 
+var DeviceSubmissionStore = Fluxxor.createStore({
+  submissions: {},
+
+  actions: {
+    'DEVICE_SUBMISSION': 'receiveDeviceSubmission'
+  },
+
+  receiveDeviceSubmission: function(state) {
+    this.submissions[state.device] = state;
+    this.emit('change');
+  }
+});
+
 var DeviceStateStore = Fluxxor.createStore({
     devices: {},
-    submissions: {},
 
     actions: {
         'DEVICE_STATE': 'receiveDeviceState',
-        'DEVICE_SUBMISSION': 'receiveDeviceSubmission',
         'SEND_QUEUE': 'sendQueue',
         'PLAYER_PAUSE': 'sendPause',
         'PLAYER_PLAY': 'sendPlay',
@@ -58,6 +69,8 @@ var DeviceStateStore = Fluxxor.createStore({
           };
         }
 
+        var isNew = deviceState.Current !== this.devices[deviceState.Device].current;
+
         this.devices[deviceState.Device].connected = deviceState.Connected;
         this.devices[deviceState.Device].playing =  deviceState.Playing;
         this.devices[deviceState.Device].paused = deviceState.Paused;
@@ -66,23 +79,18 @@ var DeviceStateStore = Fluxxor.createStore({
         this.devices[deviceState.Device].queue = deviceState.Queue;
 
         this.updatePosition(deviceState);
-        this.getArtwork(deviceState);
+
+        if (isNew) {
+          this.getArtwork(deviceState);
+        }
 
         this.emit('change');
     },
 
     getArtwork: function(deviceState) {
-      var options = {
-        headers: {
-          'Authorization': 'Bearer ' + flux.store('AuthStore').bearer
-        }
-      };
-
       if (deviceState.Current !== null) {
-        jQuery.ajax('/api/Tracks/' + deviceState.Current, options).done(function(track) {
-          jQuery.ajax('/api/Albums/' + track.AlbumId, options).done(function(album) {
-            this.devices[deviceState.Device].artwork = album.Artwork;
-          }.bind(this));
+        jQuery.ajax('/api/Tracks/' + deviceState.Current).done(function(track) {
+          this.devices[deviceState.Device].artwork = track.album.Artwork;
         }.bind(this));
 
         this.emit('change');
@@ -113,13 +121,7 @@ var DeviceStateStore = Fluxxor.createStore({
       socket.emit('Clock', Date.now());
     },
 
-    receiveDeviceSubmission: function(state) {
-      this.submissions[state.device] = state;
-      this.emit('change');
-    },
-
     sendQueue: function(payload) {
-        console.log(payload.tracks);
         window.socket.emit('Queue', {DeviceId: payload.device, TrackIds: payload.tracks});
     },
 
@@ -172,5 +174,6 @@ var AuthStore = Fluxxor.createStore({
 
 var flux = new Fluxxor.Flux({
     DeviceStateStore: new DeviceStateStore(),
+    DeviceSubmissionStore: new DeviceSubmissionStore(),
     AuthStore: new AuthStore()
 }, actions);
