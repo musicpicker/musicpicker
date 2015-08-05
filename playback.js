@@ -2,10 +2,11 @@ var util = require('util');
 var events = require('events');
 var config = require('config');
 var redis = require('redis-scanstreams')(require('redis')).createClient(6379, config.get('redis.host'));
-var redisChan = require('redis').createClient(6379, config.get('redis.host'));
+var redisChan = require('redis').createClient(6379, config.get('redis.host'), {return_buffers: true});
 var tredis = require('then-redis').createClient(config.get('redis'));
 var Promise = require('bluebird');
 var models = require('./models');
+var msgpack = require('msgpack-js');
 
 function Playback() {
 	this.dispatch();
@@ -19,13 +20,13 @@ Playback.prototype.dispatch = function() {
 		if (channel !== 'musicpicker.playback') {
 			return;
 		}
-		var message = JSON.parse(message);
+		var message = msgpack.decode(message);
 		this.emit(message.Event, message.Device, message.Options);
 	}.bind(this));
 };
 
 Playback.prototype.publish = function(eventName, deviceId, opts) {
-	redis.publish('musicpicker.playback', JSON.stringify({
+	redis.publish('musicpicker.playback', msgpack.encode({
 		Device: deviceId,
 		Event: eventName,
 		Options: opts

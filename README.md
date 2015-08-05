@@ -1,6 +1,6 @@
 # Musicpicker
 
-[![Dependency Status](https://gemnasium.com/hugoatease/musicpicker.svg)](https://gemnasium.com/hugoatease/musicpicker)
+[![Dependency Status](https://gemnasium.com/musicpicker/musicpicker.svg)](https://gemnasium.com/musicpicker/musicpicker)
 
 Musicpicker is a music playback system that connects your music devices on a cloud service and allows you
 to control what music plays on each.

@@ -29,6 +29,7 @@
     "kue": "~0.9.3",
     "lynx": "^0.2.0",
     "morgan": "^1.6.1",
+    "msgpack-js": "^0.3.0",
     "node-uuid": "^1.4.3",
     "oauth2orize": "~1.0.1",
     "passport": "~0.2.2",
