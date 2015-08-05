@@ -6,6 +6,7 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var cookieSession = require('cookie-session')
+var flash = require('connect-flash');
 
 var config = require('config');
 
@@ -40,6 +41,7 @@ app.use(cookieSession({
   keys: [config.get('secret')],
   maxAge: 15 * 24 * 3600 * 1000
 }));
+app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
 

@@ -13,6 +13,14 @@ function registerUser(username, password, confirm) {
       return reject('Username must be provided');
     }
 
+    new models.User({
+      Username: username
+    }).fetch().then(function(user) {
+      if (user !== null) {
+        return reject('Username already taken');
+      }
+    });
+
     if (password.length < 6) {
       return reject('Password too short');
     }
@@ -61,7 +69,9 @@ router.get('/logout', statsd('logout'), function(req, res) {
 });
 
 router.get('/signup', statsd('account-signup'), function(req, res) {
-  res.render('signup');
+  res.render('signup', {
+    errors: req.flash('error')
+  });
 });
 router.post('/signup', statsd('account-signup'),
   function(req, res, next) {
@@ -69,7 +79,8 @@ router.post('/signup', statsd('account-signup'),
       next();
     }).catch(function(err) {
       if (err !== undefined) {
-        return res.status(400).send(err);
+        req.flash('error', err);
+        return res.redirect('/signup');
       }
       else {
         return res.sendStatus(500);
