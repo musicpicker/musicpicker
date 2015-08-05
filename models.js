@@ -42,11 +42,16 @@ var DeviceTrack = bookshelf.Model.extend({
   idAttribute: 'Id'
 });
 
+var OauthApp = bookshelf.Model.extend({
+  tableName: 'oauth_apps'
+});
+
 module.exports = {
   User: User,
   Device: Device,
   Artist: Artist,
   Album: Album,
   Track: Track,
-  DeviceTrack: DeviceTrack
+  DeviceTrack: DeviceTrack,
+  OauthApp: OauthApp
 }

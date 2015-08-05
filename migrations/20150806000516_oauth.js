@@ -1,6 +1,7 @@
 exports.up = function(knex, Promise) {
   var apps = knex.schema.createTable('oauth_apps', function(table) {
   	table.increments('id'),
+  	table.integer('owner').references('Id').inTable('users').notNullable();
   	table.string('name').notNullable();
   	table.string('client_id').notNullable();
   	table.string('client_secret').notNullable();
@@ -15,5 +16,5 @@ exports.up = function(knex, Promise) {
 };
 
 exports.down = function(knex, Promise) {
-  
+  return knex.schema.dropTable('oauth_apps');
 };
