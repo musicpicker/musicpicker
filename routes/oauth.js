@@ -106,10 +106,6 @@ server.exchange(oauth2orize.exchange.password(
 ));
 
 router.post('/token', statsd('oauth-token'),
-  function(req, res, next) {
-    req.body['client_id'] = 'API Client'
-    next();
-  },
   passport.authenticate('oauth2-resource-owner-password', {session: false}),
   server.token(),
   server.errorHandler()
@@ -129,10 +125,6 @@ server.grant(oauth2orize.grant.token(function(client, user, ares, done) {
 
 router.get('/authorize', statsd('oauth-authorize'),
   ensureLoggedIn('/login'),
-  function(req, res, next) {
-    req.query['client_id']= 'API Client';
-    next();
-  },
   server.authorization(function(clientID, redirectURI, done) {
     done(null, clientID, redirectURI);
   }, function (client, user, done) {
