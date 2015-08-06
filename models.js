@@ -1,4 +1,5 @@
 var bookshelf = require('bookshelf')(require('./knex'));
+var validator = require('validator');
 
 var User = bookshelf.Model.extend({
   tableName: 'users',
@@ -43,7 +44,13 @@ var DeviceTrack = bookshelf.Model.extend({
 });
 
 var OauthApp = bookshelf.Model.extend({
-  tableName: 'oauth_apps'
+  tableName: 'oauth_apps',
+  
+  parse: function(response) {
+    response.enable_grant_token = validator.toBoolean(response.enable_grant_token);
+    response.enable_grant_password = validator.toBoolean(response.enable_grant_password);
+    return response;
+  }
 });
 
 module.exports = {

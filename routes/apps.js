@@ -43,7 +43,7 @@ router.post('/', function(req, res) {
 
 router.get('/:id', function(req, res) {
 	new models.OauthApp({
-		id: req.params['id']
+		id: req.params['id'],
 		owner: req.user.id
 	}).fetch({require: true}).then(function(app) {
 		res.json(app);
@@ -54,7 +54,7 @@ router.get('/:id', function(req, res) {
 
 router.delete('/:id', function(req, res) {
 	new models.OauthApp({
-		id: req.params['id']
+		id: req.params['id'],
 		owner: req.user.id
 	}).fetch({require: true}).then(function(app) {
 		app.destroy().then(function() {
@@ -66,7 +66,7 @@ router.delete('/:id', function(req, res) {
 });
 
 router.put('/:id', function(req, res) {
-	updates = pick(req.body, ['name', 'redirect_uri', 'description', 'enable_grant_token', 'enable_grant_password']);
+	updates = pick(req.body, ['redirect_uri', 'description', 'enable_grant_token', 'enable_grant_password']);
 
 	if (updates.redirect_uri !== undefined) {
 		if (!validator.isURL(updates.redirect_uri)) {
@@ -75,18 +75,18 @@ router.put('/:id', function(req, res) {
 	}
 
 	new models.OauthApp({
-		id: req.params['id']
+		id: req.params['id'],
 		owner: req.user.id
 	}).fetch({require: true}).then(function(app) {
 		if (updates.enable_grant_token && app.get('redirect_uri') === null && (updates.redirect_uri === null || updates.redirect_uri === undefined)) {
-			return res.status(400).send('redirect_uri must be provided before enabling token grant type.');
+			return res.status(400).send('redirect_uri must be provided before enabling implicit grant type.');
 		}
-		app.set(updates).then(function(updated) {
-			res.json(updated);
+		app.set(updates).save().then(function() {
+			app.fetch().then(function(updated) {
+				res.json(updated);
+			})
 		});
-	}).catch(function() {
-		res.sendStatus(404);
-	});
+	})
 });
 
 module.exports = router;

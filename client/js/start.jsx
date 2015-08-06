@@ -16,6 +16,9 @@ function mpStart(container) {
         <Route name="device-rename" path="rename" handler={DeviceRename}/>
         <Route name="device-delete" path="delete" handler={DeviceDelete}/>
       </Route>
+      <Route name="apps" path="apps" handler={Apps}/>
+      <Route name="app-create" path="apps/create" handler={AppCreate}/>
+      <Route name="app-detail" path="apps/:id" handler={AppDetail}/>
     </Route>
   );
 
