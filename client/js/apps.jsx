@@ -76,6 +76,8 @@ var AppCreate = React.createClass({
 });
 
 var AppDetail = React.createClass({
+	mixins: [Navigation],
+
 	getInitialState: function() {
 		return {
 			name: null,
@@ -173,6 +175,14 @@ var AppDetail = React.createClass({
 		}.bind(this));
 	},
 
+	delete: function() {
+		jQuery.ajax('/api/apps/' + this.props.params.id, {
+			method: 'DELETE'
+		}).done(function() {
+			this.transitionTo('apps');
+		}.bind(this));
+	},
+
 	render: function() {
 		var token_grant = (
 			<p>
@@ -217,7 +227,7 @@ var AppDetail = React.createClass({
 		return (
 			<div className="row">
 		    <br />
-		    <div className="col-md-4 col-md-offset-4">
+		    <div className="col-md-6 col-md-offset-3">
 		      <div className="panel panel-primary">
 		        <div className="panel-body">
 		          <h3 className="text-center">{this.state.name}</h3>
@@ -245,8 +255,18 @@ var AppDetail = React.createClass({
 		          </form>
 		          <br />
 
-		          {token_grant}
-		          {password_grant}
+		          <div className="row">
+		          	<div className="col-sm-6">
+		          		{token_grant}
+		          	</div>
+		          	<div className="col-sm-6">
+		          		{password_grant}
+		          	</div>
+		          </div>
+
+		          <hr />
+
+	          	<button className="btn btn-danger" onClick={this.delete}>Delete app</button>
 		        </div>
 		      </div>
 		    </div>
