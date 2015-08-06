@@ -30,11 +30,17 @@ passport.deserializeUser(function(id, done) {
 });
 
 server.serializeClient(function(client, done) {
-  return done(null, client);
+  return done(null, client.client_id);
 });
 
-server.deserializeClient(function(id, done) {
-  return done(null, id);
+server.deserializeClient(function(client_id, done) {
+  new models.OauthApp({
+    client_id: client_id
+  }).fetch({require: true}).then(function(client) {
+    return done(null, client);
+  }).catch(function() {
+    return done(null, false);
+  })
 });
 
 passport.use(new ResourceOwnerPasswordStrategy(
@@ -42,14 +48,20 @@ passport.use(new ResourceOwnerPasswordStrategy(
     var sha = require('crypto').createHash('sha256');
     sha.update(password);
 
-    new models.User({
-      Username: username,
-      Password: sha.digest('hex')
-    }).fetch().then(function(user) {
-      return done(null, clientId, user);
-    }).catch(function(err) {
-      return done(null, clientId, false);
-    });
+    new models.OauthApp({
+      client_id: client_id
+    }).fetch({require: true}).then(function(client) {
+      new models.User({
+        Username: username,
+        Password: sha.digest('hex')
+      }).fetch({require: true}).then(function(user) {
+        return done(null, clientId, user);
+      }).catch(function(err) {
+        return done(null, clientId, false);
+      });
+    }).catch(function() {
+      return done(null, false);
+    })
   }
 ));
 
