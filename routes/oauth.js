@@ -141,32 +141,37 @@ server.exchange(oauth2orize.exchange.password(
     }
 
     else {
-      new models.User({
-        Username: username,
-        Password: sha.digest('hex')
-      }).fetch({require: true}).then(function(user) {
-        new models.OauthToken({
-          user: user.id,
-          client: client.id
-        }).fetch().then(function(token) {
-          if (token !== null) {
-            return done(null, token.get('token'));
-          }
-          else {
-            uid(42).then(function(token) {
-              new models.OauthToken({
-                token: token,
-                user: user.id,
-                client: client.id
-              }).save().then(function(token) {
-                return done(null, token.get('token'));
+      if (!client.get('enable_grant_password')) {
+        return done(new Error('Grant type password is disabled for application ' + client.get('name')));
+      }
+      else {
+        new models.User({
+          Username: username,
+          Password: sha.digest('hex')
+        }).fetch({require: true}).then(function(user) {
+          new models.OauthToken({
+            user: user.id,
+            client: client.id
+          }).fetch().then(function(token) {
+            if (token !== null) {
+              return done(null, token.get('token'));
+            }
+            else {
+              uid(42).then(function(token) {
+                new models.OauthToken({
+                  token: token,
+                  user: user.id,
+                  client: client.id
+                }).save().then(function(token) {
+                  return done(null, token.get('token'));
+                });
               });
-            });
-          }
+            }
+          });
+        }).catch(function(err) {
+          return done(null, false);
         });
-      }).catch(function(err) {
-        return done(null, false);
-      });
+      }
     }
   }
 ));
@@ -239,25 +244,30 @@ server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, do
 }));
 
 server.grant(oauth2orize.grant.token(function(client, user, ares, done) {
-  new models.OauthToken({
-    user: user.id,
-    client: client.id
-  }).fetch().then(function(token) {
-    if (token !== null) {
-      return done(null, token.get('token'));
-    }
-    else {
-      uid(42).then(function(token) {
-        new models.OauthToken({
-          token: token,
-          user: user.id,
-          client: client.id
-        }).save().then(function(token) {
-          return done(null, token.get('token'));
+  if (!client.get('enable_grant_token')) {
+    return done(new Error('Grant type token is disabled for application ' + client.get('name')));
+  }
+  else {
+    new models.OauthToken({
+      user: user.id,
+      client: client.id
+    }).fetch().then(function(token) {
+      if (token !== null) {
+        return done(null, token.get('token'));
+      }
+      else {
+        uid(42).then(function(token) {
+          new models.OauthToken({
+            token: token,
+            user: user.id,
+            client: client.id
+          }).save().then(function(token) {
+            return done(null, token.get('token'));
+          });
         });
-      });
-    }
-  });
+      }
+    });
+  }
 }));
 
 router.get('/authorize', statsd('oauth-authorize'),
