@@ -34,6 +34,7 @@
     "node-uuid": "^1.4.3",
     "oauth2orize": "~1.0.1",
     "passport": "~0.2.2",
+    "passport-http": "^0.2.2",
     "passport-http-bearer": "~1.0.1",
     "passport-local": "~1.0.0",
     "passport-oauth2-resource-owner-password": "~1.0.0",

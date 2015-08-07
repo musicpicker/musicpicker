@@ -1,15 +1,21 @@
 var express = require('express');
 var router = express.Router();
 
+var config = require('config');
+var redis = require('then-redis').createClient(config.get('redis'));
+
 var passport = require('passport');
 var ResourceOwnerPasswordStrategy = require('passport-oauth2-resource-owner-password').Strategy;
 var BearerStrategy = require('passport-http-bearer').Strategy;
 var LocalStrategy = require('passport-local').Strategy;
+var BasicStrategy = require('passport-http').BasicStrategy;
+
 var oauth2orize = require('oauth2orize');
 var uid = require('uid-safe')
 var extract = require('url-querystring');
 
 var ensureLoggedIn = require('connect-ensure-login').ensureLoggedIn;
+var Promise = require('bluebird');
 
 var models = require('../models');
 var statsd = require('../statsd').middleware;
@@ -76,6 +82,19 @@ passport.use(new ResourceOwnerPasswordStrategy(
         return done(null, false);
       })
     }
+  }
+));
+
+passport.use(new BasicStrategy(
+  function (client_id, client_secret, done) {
+    new models.OauthApp({
+      client_id: client_id,
+      client_secret: client_secret
+    }).fetch({require: true}).then(function(client) {
+      return done(null, client);
+    }).catch(function() {
+      return done(null, false);
+    })
   }
 ));
 
@@ -159,10 +178,65 @@ router.post('/token', statsd('oauth-token'),
     }
     next();
   },
-  passport.authenticate('oauth2-resource-owner-password', {session: false}),
+  passport.authenticate(['basic', 'oauth2-resource-owner-password'], {session: false}),
   server.token(),
   server.errorHandler()
 );
+
+server.grant(oauth2orize.grant.code(function(client, redirectURI, user, ares, done) {
+  if (redirectURI === undefined) {
+    redirectURI = client.get('redirect_uri');
+  }
+
+  uid(16).then(function(code) {
+    Promise.all([
+      redis.set('musicpicker.oauth.' + client.id + '.' + code + '.user', user.id),
+      redis.expire('musicpicker.oauth.' + client.id + '.' + code + '.user', 60),
+      redis.set('musicpicker.oauth.' + client.id + '.' + code + '.redirect', redirectURI),
+      redis.expire('musicpicker.oauth.' + client.id + '.' + code + '.redirect', 60)
+    ]).then(function() {
+      return done(null, code);
+    }).catch(function(err) {
+      return done(err);
+    });
+  })
+}));
+
+server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, done) {
+  if (redirectURI === undefined) {
+    redirectURI = client.get('redirect_uri');
+  }
+
+  Promise.props({
+    userId: redis.get('musicpicker.oauth.' + client.id + '.' + code + '.user'),
+    storedRedirect: redis.get('musicpicker.oauth.' + client.id + '.' + code + '.redirect')
+  }).then(function(props) {
+    if (props.userId === null || redirectURI !== props.storedRedirect) {
+      return done(null, false);
+    }
+    else {
+      new models.OauthToken({
+        user: props.userId,
+        client: client.id
+      }).fetch().then(function(token) {
+        if (token !== null) {
+          return done(null, token.get('token'));
+        }
+        else {
+          uid(42).then(function(token) {
+            new models.OauthToken({
+              token: token,
+              user: props.userId,
+              client: client.id
+            }).save().then(function(token) {
+              return done(null, token.get('token'));
+            });
+          });
+        }
+      });
+    }
+  });
+}));
 
 server.grant(oauth2orize.grant.token(function(client, user, ares, done) {
   new models.OauthToken({
