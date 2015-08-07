@@ -55,6 +55,7 @@ var OauthApp = bookshelf.Model.extend({
 
 var OauthToken = bookshelf.Model.extend({
   tableName: 'oauth_tokens',
+  idAttribute: 'token',
   user: function() {
     return this.belongsTo(User, 'user_id');
   },

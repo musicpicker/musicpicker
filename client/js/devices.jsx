@@ -93,12 +93,18 @@ var Devices = React.createClass({
               {devices}
 
               <div className="text-right">
-                <Link to="apps" className="btn btn-default btn-sm">OAuth apps</Link>
-                &nbsp;&nbsp;&nbsp;
                 <a className="btn btn-default btn-sm" href="/password">Password change</a>
                 &nbsp;&nbsp;&nbsp;
                 <button className="btn btn-danger btn-sm" onClick={this.logout}>Log out</button>
               </div>
+            </div>
+          </div>
+          <div className="panel panel-primary">
+            <div className="panel-body">
+              <h5>OAuth management</h5>
+              <Link to="grants" className="btn btn-default btn-sm">Grants</Link>
+              &nbsp;&nbsp;
+              <Link to="apps" className="btn btn-default btn-sm">OAuth apps</Link>
             </div>
           </div>
           <GHRelease />

@@ -19,6 +19,8 @@ function mpStart(container) {
       <Route name="apps" path="apps" handler={Apps}/>
       <Route name="app-create" path="apps/create" handler={AppCreate}/>
       <Route name="app-detail" path="apps/:id" handler={AppDetail}/>
+      <Route name="grants" path="grants" handler={Grants}/>
+      <Route name="grant-detail" path="grants/:token" handler={GrantDetail}/>
     </Route>
   );
 

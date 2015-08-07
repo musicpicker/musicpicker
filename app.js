@@ -18,6 +18,7 @@ var account = require('./routes/account');
 var devices = require('./routes/devices');
 var metadata = require('./routes/metadata');
 var apps = require('./routes/apps');
+var grants = require('./routes/grants');
 
 var app = express();
 app.use(errorHandler());
@@ -51,6 +52,7 @@ app.use('/oauth', auth);
 app.use('/api/devices', devices);
 app.use('/api', metadata);
 app.use('/api/apps', apps);
+app.use('/api/grants', grants);
 
 app.get('/favicon.ico', function(req, res) {
 	res.sendStatus(404);
