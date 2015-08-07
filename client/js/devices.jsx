@@ -48,7 +48,7 @@ var DeviceItem = React.createClass({
 });
 
 var Devices = React.createClass({
-  mixins: [FluxMixin],
+  mixins: [FluxMixin, Navigation],
   
 	getInitialState: function() {
 		return {
@@ -93,9 +93,11 @@ var Devices = React.createClass({
               {devices}
 
               <div className="text-right">
-                <a className="className btn btn-default" href="/password">Password change</a>
+                <Link to="apps" className="btn btn-default btn-sm">OAuth apps</Link>
                 &nbsp;&nbsp;&nbsp;
-                <button className="btn btn-danger" onClick={this.logout}>Log out</button>
+                <a className="btn btn-default btn-sm" href="/password">Password change</a>
+                &nbsp;&nbsp;&nbsp;
+                <button className="btn btn-danger btn-sm" onClick={this.logout}>Log out</button>
               </div>
             </div>
           </div>
