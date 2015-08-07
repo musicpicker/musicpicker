@@ -6,7 +6,7 @@ var ResourceOwnerPasswordStrategy = require('passport-oauth2-resource-owner-pass
 var BearerStrategy = require('passport-http-bearer').Strategy;
 var LocalStrategy = require('passport-local').Strategy;
 var oauth2orize = require('oauth2orize');
-var uuid = require('node-uuid');
+var uid = require('uid-safe')
 
 var ensureLoggedIn = require('connect-ensure-login').ensureLoggedIn;
 
@@ -49,15 +49,15 @@ passport.use(new ResourceOwnerPasswordStrategy(
     sha.update(password);
 
     new models.OauthApp({
-      client_id: client_id
+      client_id: clientId
     }).fetch({require: true}).then(function(client) {
       new models.User({
         Username: username,
         Password: sha.digest('hex')
       }).fetch({require: true}).then(function(user) {
-        return done(null, clientId, user);
+        return done(null, client, user);
       }).catch(function(err) {
-        return done(null, clientId, false);
+        return done(null, client, false);
       });
     }).catch(function() {
       return done(null, false);
@@ -89,16 +89,26 @@ server.exchange(oauth2orize.exchange.password(
     new models.User({
       Username: username,
       Password: sha.digest('hex')
-    }).fetch().then(function(user) {
-      if (user.get('Token') === null) {
-        user.set({Token: uuid.v4()});
-        user.save().then(function(user) {
-          return done(null, user.get('Token'));
-        })
-      }
-      else {
-        return done(null, user.get('Token'));
-      }
+    }).fetch({require: true}).then(function(user) {
+      new models.OauthToken({
+        user: user.id,
+        client: client.id
+      }).fetch().then(function(token) {
+        if (token !== null) {
+          return done(null, token.get('token'));
+        }
+        else {
+          uid(42).then(function(token) {
+            new models.OauthToken({
+              token: token,
+              user: user.id,
+              client: client.id
+            }).save().then(function(token) {
+              return done(null, token.get('token'));
+            });
+          });
+        }
+      });
     }).catch(function(err) {
       return done(null, false);
     });
@@ -112,21 +122,38 @@ router.post('/token', statsd('oauth-token'),
 );
 
 server.grant(oauth2orize.grant.token(function(client, user, ares, done) {
-  if (user.get('Token') === null) {
-    user.set({Token: uuid.v4()});
-    user.save().then(function(user) {
-      return done(null, user.get('Token'));
-    })
-  }
-  else {
-    return done(null, user.get('Token'));
-  }
+  new models.OauthToken({
+    user: user.id,
+    client: client.id
+  }).fetch().then(function(token) {
+    if (token !== null) {
+      return done(null, token.get('token'));
+    }
+    else {
+      uid(42).then(function(token) {
+        new models.OauthToken({
+          token: token,
+          user: user.id,
+          client: client.id
+        }).save().then(function(token) {
+          return done(null, token.get('token'));
+        });
+      });
+    }
+  });
 }));
 
 router.get('/authorize', statsd('oauth-authorize'),
   ensureLoggedIn('/login'),
   server.authorization(function(clientID, redirectURI, done) {
-    done(null, clientID, redirectURI);
+    new models.OauthApp({
+      client_id: clientID,
+      redirect_uri: redirectURI
+    }).fetch({require: true}).then(function(client) {
+      done(null, client, redirectURI);
+    }).catch(function() {
+      return done(null, false);
+    });
   }, function (client, user, done) {
     done(null, client, user);
   })

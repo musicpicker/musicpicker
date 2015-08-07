@@ -53,6 +53,10 @@ var OauthApp = bookshelf.Model.extend({
   }
 });
 
+var OauthToken = bookshelf.Model.extend({
+  tableName: 'oauth_tokens'
+});
+
 module.exports = {
   User: User,
   Device: Device,
@@ -60,5 +64,6 @@ module.exports = {
   Album: Album,
   Track: Track,
   DeviceTrack: DeviceTrack,
-  OauthApp: OauthApp
+  OauthApp: OauthApp,
+  OauthToken: OauthToken
 }
