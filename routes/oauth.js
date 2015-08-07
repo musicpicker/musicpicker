@@ -216,30 +216,35 @@ server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, do
     userId: redis.get('musicpicker.oauth.' + client.id + '.' + code + '.user'),
     storedRedirect: redis.get('musicpicker.oauth.' + client.id + '.' + code + '.redirect')
   }).then(function(props) {
-    if (props.userId === null || redirectURI !== props.storedRedirect) {
-      return done(null, false);
-    }
-    else {
-      new models.OauthToken({
-        user_id: props.userId,
-        client_id: client.id
-      }).fetch().then(function(token) {
-        if (token !== null) {
-          return done(null, token.get('token'));
-        }
-        else {
-          uid(42).then(function(token) {
-            new models.OauthToken({
-              token: token,
-              user_id: props.userId,
-              client_id: client.id
-            }).save().then(function(token) {
-              return done(null, token.get('token'));
+    Promise.all([
+      redis.del('musicpicker.oauth.' + client.id + '.' + code + '.user'),
+      redis.del('musicpicker.oauth.' + client.id + '.' + code + '.redirect')
+    ]).then(function() {
+      if (props.userId === null || redirectURI !== props.storedRedirect) {
+        return done(null, false);
+      }
+      else {
+        new models.OauthToken({
+          user_id: props.userId,
+          client_id: client.id
+        }).fetch().then(function(token) {
+          if (token !== null) {
+            return done(null, token.get('token'));
+          }
+          else {
+            uid(42).then(function(token) {
+              new models.OauthToken({
+                token: token,
+                user_id: props.userId,
+                client_id: client.id
+              }).save().then(function(token) {
+                return done(null, token.get('token'));
+              });
             });
-          });
-        }
-      });
-    }
+          }
+        });
+      }
+    });
   });
 }));
 
