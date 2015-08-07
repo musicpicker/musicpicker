@@ -21,7 +21,7 @@ router.use(function(req, res, next) {
 
 router.get('/', function(req, res) {
 	new models.OauthApp({
-		owner: req.user.id
+		owner_id: req.user.id
 	}).fetchAll().then(function(apps) {
 		res.json(apps);
 	});
@@ -34,7 +34,7 @@ router.post('/', function(req, res) {
 	}).then(function(tokens) {
 		new models.OauthApp({
 			name: req.body['name'],
-			owner: req.user.id,
+			owner_id: req.user.id,
 			client_id: tokens.client_id,
 			client_secret: tokens.client_secret
 		}).save().then(function() {
@@ -46,7 +46,7 @@ router.post('/', function(req, res) {
 router.get('/:id', function(req, res) {
 	new models.OauthApp({
 		id: req.params['id'],
-		owner: req.user.id
+		owner_id: req.user.id
 	}).fetch({require: true}).then(function(app) {
 		res.json(app);
 	}).catch(function() {
@@ -57,7 +57,7 @@ router.get('/:id', function(req, res) {
 router.delete('/:id', function(req, res) {
 	new models.OauthApp({
 		id: req.params['id'],
-		owner: req.user.id
+		owner_id: req.user.id
 	}).fetch({require: true}).then(function(app) {
 		Promise.all([
 			app.destroy(),
@@ -83,7 +83,7 @@ router.put('/:id', function(req, res) {
 
 	new models.OauthApp({
 		id: req.params['id'],
-		owner: req.user.id
+		owner_id: req.user.id
 	}).fetch({require: true}).then(function(app) {
 		if (updates.enable_grant_token && app.get('redirect_uri') === null && (updates.redirect_uri === null || updates.redirect_uri === undefined)) {
 			return res.status(400).send('redirect_uri must be provided before enabling implicit grant type.');

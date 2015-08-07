@@ -54,7 +54,13 @@ var OauthApp = bookshelf.Model.extend({
 });
 
 var OauthToken = bookshelf.Model.extend({
-  tableName: 'oauth_tokens'
+  tableName: 'oauth_tokens',
+  user: function() {
+    return this.belongsTo(User, 'user_id');
+  },
+  client: function() {
+    return this.belongsTo(OauthApp, 'client_id');
+  }
 });
 
 module.exports = {

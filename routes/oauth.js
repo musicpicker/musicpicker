@@ -150,8 +150,8 @@ server.exchange(oauth2orize.exchange.password(
           Password: sha.digest('hex')
         }).fetch({require: true}).then(function(user) {
           new models.OauthToken({
-            user: user.id,
-            client: client.id
+            user_id: user.id,
+            client_id: client.id
           }).fetch().then(function(token) {
             if (token !== null) {
               return done(null, token.get('token'));
@@ -160,8 +160,8 @@ server.exchange(oauth2orize.exchange.password(
               uid(42).then(function(token) {
                 new models.OauthToken({
                   token: token,
-                  user: user.id,
-                  client: client.id
+                  user_id: user.id,
+                  client_id: client.id
                 }).save().then(function(token) {
                   return done(null, token.get('token'));
                 });
@@ -221,8 +221,8 @@ server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, do
     }
     else {
       new models.OauthToken({
-        user: props.userId,
-        client: client.id
+        user_id: props.userId,
+        client_id: client.id
       }).fetch().then(function(token) {
         if (token !== null) {
           return done(null, token.get('token'));
@@ -231,8 +231,8 @@ server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, do
           uid(42).then(function(token) {
             new models.OauthToken({
               token: token,
-              user: props.userId,
-              client: client.id
+              user_id: props.userId,
+              client_id: client.id
             }).save().then(function(token) {
               return done(null, token.get('token'));
             });
@@ -249,8 +249,8 @@ server.grant(oauth2orize.grant.token(function(client, user, ares, done) {
   }
   else {
     new models.OauthToken({
-      user: user.id,
-      client: client.id
+      user_id: user.id,
+      client_id: client.id
     }).fetch().then(function(token) {
       if (token !== null) {
         return done(null, token.get('token'));
@@ -259,8 +259,8 @@ server.grant(oauth2orize.grant.token(function(client, user, ares, done) {
         uid(42).then(function(token) {
           new models.OauthToken({
             token: token,
-            user: user.id,
-            client: client.id
+            user_id: user.id,
+            client_id: client.id
           }).save().then(function(token) {
             return done(null, token.get('token'));
           });
@@ -298,9 +298,20 @@ passport.use(new BearerStrategy(
     new models.User({
       Token: token
     }).fetch().then(function(user) {
-      return done(null, user);
+      if (user !== null) {
+        return done(null, user);
+      }
+      else {
+        new models.OauthToken({
+          token: token
+        }).fetch({require: true, withRelated: ['client', 'user']}).then(function(token) {
+          return done(null, token.related('user'), {client: token.related('client')});
+        }).catch(function() {
+          return done(null, false);
+        });
+      }
     }).catch(function(err) {
-      return done(null, false);
+      return done(err);
     });
   }
 ));
