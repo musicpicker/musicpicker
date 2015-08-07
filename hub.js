@@ -313,6 +313,13 @@ function authenticate(token, callback) {
           return callback(null, true);
         }
         else {
+          new models.OauthToken({
+            token: token
+          }).fetch({require: true, withRelated: ['client', 'user']}).then(function(token) {
+            return callback(null, true);
+          }).catch(function() {
+            return callback(new Error('Invalid client-scoped authentication token'));
+          });
           return callback(new Error('Invalid authentication token'));
         }
       }).catch(function(err) {
@@ -337,8 +344,14 @@ function postAuthenticate(socket, token) {
     else {
       new models.User({
         Token: token
-      }).fetch().then(function(user) {
+      }).fetch({require: true}).then(function(user) {
         socket.client.user = user;
+      }).catch(function() {
+        new models.OauthToken({
+          token: token
+        }).fetch({require: true, withRelated: ['client', 'user']}).then(function(token) {
+          socket.client.user = token.related('user');
+        });
       });
     }
   });
