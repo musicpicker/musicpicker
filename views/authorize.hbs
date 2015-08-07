@@ -1,0 +1,29 @@
+<div class="row">
+  <br />
+  <div class="col-md-6 col-md-offset-3">
+    <div class="panel panel-primary">
+      <div class="panel-body">
+        <h3 class="text-center">Musicpicker</h3>
+        <p>
+          <b>Application name</b><br />
+          {{client_name}}<br />
+          {{#if client_description}}
+          <b>Application description</b><br />
+          {{client_description}}
+          {{/if}}<br />
+
+          This application wants to get access to the Musicpicker platform on your behalf.<br />
+          It will be able to manage devices retrieve your music library data and control your connected devices.<br />
+          Your password will NOT be transmitted to the application.
+        </p>
+        <form method="post" action="/oauth/authorize/decision?transaction_id={{transactionID}}" class="text-center">
+          <button type="submit" class="btn btn-success">Accept</button>
+          &nbsp;&nbsp;&nbsp;
+          <button type="submit" name="cancel" class="btn btn-danger" value="true">Deny</button>
+        </form>
+        <br />
+      </div>
+    </div>
+    <div id="releases"></div>
+  </div>
+</div>

@@ -37,7 +37,7 @@ passport.deserializeUser(function(id, done) {
 });
 
 server.serializeClient(function(client, done) {
-  return done(null, client.client_id);
+  return done(null, client.get('client_id'));
 });
 
 server.deserializeClient(function(client_id, done) {
@@ -294,8 +294,28 @@ router.get('/authorize', statsd('oauth-authorize'),
       return done(null, false);
     });
   }, function (client, user, done) {
-    done(null, client, user);
-  })
+    new models.OauthToken({
+      client_id: client.id,
+      user_id: user.id
+    }).fetch({require: true}).then(function() {
+      return done(null, client, user);
+    }).catch(function() {
+      return done(null, false);
+    });
+  }),
+  function(req, res) {
+    res.render('authorize', {
+      transactionID: req.oauth2.transactionID,
+      user: req.user, client: req.oauth2.client,
+      client_name: req.oauth2.client.get('name'),
+      client_description: req.oauth2.client.get('description')
+    });
+  }
+);
+
+router.post('/authorize/decision', statsd('oauth-decision'),
+  ensureLoggedIn('/login'),
+  server.decision()
 );
 
 passport.use(new BearerStrategy(
