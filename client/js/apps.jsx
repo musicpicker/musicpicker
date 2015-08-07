@@ -26,6 +26,9 @@ var Apps = React.createClass({
 	            		return <Link to="app-detail" params={{id: app.id}} className="list-group-item">{app.name}</Link>;
 	            	}.bind(this))}
 	            </div>
+	            <div className="text-center">
+	            	<Link to="app-create" className="btn btn-default">Create app</Link>
+	            </div>
 	          </div>
 	        </div>
 	      </div>
@@ -87,7 +90,7 @@ var AppDetail = React.createClass({
 			redirect_uri: null,
 			enable_grant_token: null,
 			enable_grant_password: null,
-			error: null
+			error: null,
 		}
 	},
 
@@ -115,11 +118,10 @@ var AppDetail = React.createClass({
 
 	updateRedirect: function(ev) {
 		ev.preventDefault();
-		var redirect_uri = $(React.findDOMNode(this.refs.redirect_uri)).val();
 		jQuery.ajax('/api/apps/' + this.props.params.id, {
 			method: 'PUT',
 			data: {
-				redirect_uri: redirect_uri
+				redirect_uri: this.state.redirect_uri
 			}
 		}).done(function(app) {
 			this.setState(app);
@@ -224,6 +226,14 @@ var AppDetail = React.createClass({
 			);
 		}
 
+		if (this.state.redirect_uri == null) {
+			var redirect_incentive = (
+        <div className="alert alert-warning">
+          <b>Warning.</b> You must specify a redirect URI in order for auth code and token grant types to work.
+        </div>
+			);
+		}
+
 		return (
 			<div className="row">
 		    <br />
@@ -248,6 +258,9 @@ var AppDetail = React.createClass({
 		          	<button type="submit" className="btn btn-default">Update description</button>
 		          </form>
 		          <br />
+
+		          {redirect_incentive}
+
 		          <form onSubmit={this.updateRedirect}>
 		          	<input type="text" className="form-control" value={this.state.redirect_uri} onChange={this.uriChange} placeholder="Redirect URI" ref="redirect_uri" />
 		          	<br />
