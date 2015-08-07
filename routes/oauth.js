@@ -7,6 +7,7 @@ var BearerStrategy = require('passport-http-bearer').Strategy;
 var LocalStrategy = require('passport-local').Strategy;
 var oauth2orize = require('oauth2orize');
 var uid = require('uid-safe')
+var extract = require('url-querystring');
 
 var ensureLoggedIn = require('connect-ensure-login').ensureLoggedIn;
 
@@ -148,8 +149,15 @@ router.get('/authorize', statsd('oauth-authorize'),
   server.authorization(function(clientID, redirectURI, done) {
     new models.OauthApp({
       client_id: clientID,
-      redirect_uri: redirectURI
     }).fetch({require: true}).then(function(client) {
+      if (redirectURI === undefined) {
+        redirectURI = client.get('redirect_uri');
+      }
+      else {
+        if (extract(redirectURI).url !== client.get('redirect_uri')) {
+          return done(null, false);
+        }
+      }
       done(null, client, redirectURI);
     }).catch(function() {
       return done(null, false);
