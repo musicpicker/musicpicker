@@ -6,6 +6,8 @@ var Promise = require('bluebird');
 var uid = require('uid-safe')
 var pick = require('lodash/object/pick');
 var validator = require('validator');
+var queue = require('../queue');
+var knex = require('../knex');
 
 router.use(passport.authenticate('session'));
 router.use(function(req, res, next) {
@@ -57,7 +59,12 @@ router.delete('/:id', function(req, res) {
 		id: req.params['id'],
 		owner: req.user.id
 	}).fetch({require: true}).then(function(app) {
-		app.destroy().then(function() {
+		Promise.all([
+			app.destroy(),
+			queue.create('app-deletion', {
+				appId: req.params['id']
+			}).save()
+		]).then(function() {
 			res.sendStatus(204);
 		})
 	}).catch(function() {
@@ -86,6 +93,12 @@ router.put('/:id', function(req, res) {
 				res.json(updated);
 			})
 		});
+	})
+});
+
+queue.process('app-deletion', function(job, done) {
+	knex('oauth_tokens').where('client', job.data.appId).delete().then(function() {
+		done();
 	})
 });
 
