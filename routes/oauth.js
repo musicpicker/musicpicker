@@ -49,9 +49,8 @@ passport.use(new ResourceOwnerPasswordStrategy(
     var sha = require('crypto').createHash('sha256');
     sha.update(password);
 
-    new models.OauthApp({
-      client_id: clientId
-    }).fetch({require: true}).then(function(client) {
+    if (clientId === 'legacy') {
+      var client = {client_id: 'legacy'}
       new models.User({
         Username: username,
         Password: sha.digest('hex')
@@ -60,9 +59,23 @@ passport.use(new ResourceOwnerPasswordStrategy(
       }).catch(function(err) {
         return done(null, client, false);
       });
-    }).catch(function() {
-      return done(null, false);
-    })
+    }
+    else {
+      new models.OauthApp({
+        client_id: clientId
+      }).fetch({require: true}).then(function(client) {
+        new models.User({
+          Username: username,
+          Password: sha.digest('hex')
+        }).fetch({require: true}).then(function(user) {
+          return done(null, client, user);
+        }).catch(function(err) {
+          return done(null, client, false);
+        });
+      }).catch(function() {
+        return done(null, false);
+      })
+    }
   }
 ));
 
@@ -87,36 +100,65 @@ server.exchange(oauth2orize.exchange.password(
     var sha = require('crypto').createHash('sha256');
     sha.update(password);
 
-    new models.User({
-      Username: username,
-      Password: sha.digest('hex')
-    }).fetch({require: true}).then(function(user) {
-      new models.OauthToken({
-        user: user.id,
-        client: client.id
-      }).fetch().then(function(token) {
-        if (token !== null) {
-          return done(null, token.get('token'));
-        }
-        else {
+    if (client.client_id === 'legacy') {
+      new models.User({
+        Username: username,
+        Password: sha.digest('hex')
+      }).fetch({require: true}).then(function(user) {
+        if (user.get('Token') === null) {
           uid(42).then(function(token) {
-            new models.OauthToken({
-              token: token,
-              user: user.id,
-              client: client.id
-            }).save().then(function(token) {
-              return done(null, token.get('token'));
+            user.set({Token: token});
+            user.save().then(function(user) {
+              return done(null, user.get('Token'));
             });
           });
         }
+        else {
+          return done(null, user.get('Token'));
+        }
+      }).catch(function(err) {
+        return done(null, false);
       });
-    }).catch(function(err) {
-      return done(null, false);
-    });
+    }
+
+    else {
+      new models.User({
+        Username: username,
+        Password: sha.digest('hex')
+      }).fetch({require: true}).then(function(user) {
+        new models.OauthToken({
+          user: user.id,
+          client: client.id
+        }).fetch().then(function(token) {
+          if (token !== null) {
+            return done(null, token.get('token'));
+          }
+          else {
+            uid(42).then(function(token) {
+              new models.OauthToken({
+                token: token,
+                user: user.id,
+                client: client.id
+              }).save().then(function(token) {
+                return done(null, token.get('token'));
+              });
+            });
+          }
+        });
+      }).catch(function(err) {
+        return done(null, false);
+      });
+    }
   }
 ));
 
 router.post('/token', statsd('oauth-token'),
+  function(req, res, next) {
+    if (req.body.client_id === undefined) {
+      req.body.client_id = 'legacy';
+    }
+    next();
+  },
   passport.authenticate('oauth2-resource-owner-password', {session: false}),
   server.token(),
   server.errorHandler()
