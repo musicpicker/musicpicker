@@ -10,7 +10,13 @@ exports.up = function(knex, Promise) {
 		table.renameColumn('client', 'client_id');
 	});
 
-	return Promise.all([apps, tokens]);
+	return new Promise(function(resolve, reject) {
+		apps.then(function() {
+			tokens.then(function() {
+				resolve();
+			})
+		})
+	});
 };
 
 exports.down = function(knex, Promise) {
