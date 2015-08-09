@@ -159,10 +159,9 @@ server.exchange(oauth2orize.exchange.password(
             else {
               uid(42).then(function(token) {
                 new models.OauthToken({
-                  token: token,
                   user_id: user.id,
                   client_id: client.id
-                }).save().then(function(token) {
+                }).save({token: token}).then(function(token) {
                   return done(null, token.get('token'));
                 });
               });
@@ -234,10 +233,9 @@ server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, do
           else {
             uid(42).then(function(token) {
               new models.OauthToken({
-                token: token,
                 user_id: props.userId,
                 client_id: client.id
-              }).save().then(function(token) {
+              }).save({token: token}).then(function(token) {
                 return done(null, token.get('token'));
               });
             });
@@ -263,10 +261,9 @@ server.grant(oauth2orize.grant.token(function(client, user, ares, done) {
       else {
         uid(42).then(function(token) {
           new models.OauthToken({
-            token: token,
             user_id: user.id,
             client_id: client.id
-          }).save().then(function(token) {
+          }).save({token: token}).then(function(token) {
             return done(null, token.get('token'));
           });
         });
