@@ -1,3 +1,9 @@
+var React = require('react');
+var FluxMixin = require('fluxxor').FluxMixin(React);
+var StoreWatchMixin = require('fluxxor').StoreWatchMixin;
+var moment = require('moment');
+var jQuery = require('jquery');
+
 var TrackInfo = React.createClass({
 	mixins: [FluxMixin],
 
@@ -207,3 +213,5 @@ var Player = React.createClass({
 		}
 	}
 });
+
+module.exports.Player = Player;

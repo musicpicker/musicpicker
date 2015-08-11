@@ -1,3 +1,5 @@
+var React = require('react');
+
 	var LibraryState = React.createClass({
     render: function() {
         if (this.props.error) {
@@ -43,3 +45,5 @@
         }
     }
 });
+
+module.exports.LibraryState = LibraryState;

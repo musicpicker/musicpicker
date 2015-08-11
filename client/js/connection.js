@@ -1,3 +1,7 @@
+var React = require('react');
+var FluxMixin = require('fluxxor').FluxMixin(React);
+var StoreWatchMixin = require('fluxxor').StoreWatchMixin;
+
 var Connection = React.createClass({
   mixins: [FluxMixin, StoreWatchMixin('DeviceStateStore')],
 
@@ -44,3 +48,5 @@ var Connection = React.createClass({
     );
   }
 });
+
+module.exports.Connection = Connection;

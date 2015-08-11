@@ -1,3 +1,8 @@
+var React = require('react');
+var jQuery = require('jquery');
+var Navigation = require('fluxxor').Navigation;
+var Link = require('react-router').Link;
+
 var Grants = React.createClass({
 	mixins: [Navigation],
 
@@ -81,3 +86,6 @@ var GrantDetail = React.createClass({
 		);
 	}
 });
+
+module.exports.Grants = Grants;
+module.exports.GrantDetail = GrantDetail;

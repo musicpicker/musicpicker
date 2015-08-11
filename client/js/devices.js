@@ -1,3 +1,12 @@
+var React = require('react');
+var jQuery = require('jquery');
+var Navigation = require('react-router').Navigation;
+var FluxMixin = require('fluxxor').FluxMixin(React);
+var StoreWatchMixin = require('fluxxor').StoreWatchMixin;
+var Link = require('react-router').Link;
+var Connection = require('./connection').Connection;
+var GHRelease = require('./ghrelease').GHRelease;
+
 var DeviceItem = React.createClass({
     mixins: [Navigation, FluxMixin, StoreWatchMixin('DeviceStateStore')],
 
@@ -113,3 +122,5 @@ var Devices = React.createClass({
 	  )
 	}
 });
+
+module.exports.Devices = Devices;

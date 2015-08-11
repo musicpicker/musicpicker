@@ -15,11 +15,7 @@
   ],
   "dependencies": {
     "bootstrap": "~3.3.5",
-    "react": "~0.13.3",
-    "fluxxor": "~1.7.0",
-    "roboto-fontface": "~0.4.3",
-    "react-router": "~0.13.3",
-    "moment": "~2.10.5"
+    "roboto-fontface": "~0.4.3"
   },
   "overrides": {
     "bootstrap": {

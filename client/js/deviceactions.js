@@ -1,3 +1,9 @@
+var React = require('react');
+var jQuery = require('jquery');
+var Navigation = require('react-router').Navigation;
+var FluxMixin = require('fluxxor').FluxMixin(React);
+var Link = require('react-router').Link;
+
 var DeviceDelete = React.createClass({
 	mixins: [Navigation, FluxMixin],
 
@@ -70,3 +76,7 @@ var DeviceActions = React.createClass({
 		);
 	}
 })
+
+module.exports.DeviceActions = DeviceActions;
+module.exports.DeviceRename = DeviceRename;
+module.exports.DeviceDelete = DeviceDelete;

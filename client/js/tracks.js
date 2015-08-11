@@ -1,3 +1,9 @@
+var React = require('react');
+var jQuery = require('jquery');
+var FluxMixin = require('fluxxor').FluxMixin(React);
+
+var LibraryState = require('./utils').LibraryState;
+
 var TracksView = React.createClass({
     mixins: [FluxMixin],
 
@@ -79,3 +85,5 @@ var TracksView = React.createClass({
         )
     }
 });
+
+module.exports.TracksView = TracksView;

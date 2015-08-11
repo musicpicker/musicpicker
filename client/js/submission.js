@@ -1,3 +1,7 @@
+var React = require('react');
+var FluxMixin = require('fluxxor').FluxMixin(React);
+var StoreWatchMixin = require('fluxxor').StoreWatchMixin;
+
 var Submission = React.createClass({
   mixins: [FluxMixin, StoreWatchMixin('DeviceSubmissionStore')],
 
@@ -31,3 +35,5 @@ var Submission = React.createClass({
     }
   }
 });
+
+module.exports.Submission = Submission;

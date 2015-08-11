@@ -1,12 +1,5 @@
-var FluxMixin = Fluxxor.FluxMixin(React);
-var StoreWatchMixin = Fluxxor.StoreWatchMixin;
-
-var RouteHandler = ReactRouter.RouteHandler;
-var Route = ReactRouter.Route;
-var DefaultRoute = ReactRouter.DefaultRoute;
-var Redirect = ReactRouter.Redirect;
-var Navigation = ReactRouter.Navigation;
-var Link = ReactRouter.Link;
+var Fluxxor = require('fluxxor');
+var jQuery = require('jquery');
 
 var actions = {
     receiveDeviceState: function(deviceState) {
@@ -177,3 +170,5 @@ var flux = new Fluxxor.Flux({
     DeviceSubmissionStore: new DeviceSubmissionStore(),
     AuthStore: new AuthStore()
 }, actions);
+
+module.exports.flux = flux;

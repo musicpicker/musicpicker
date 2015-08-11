@@ -1,3 +1,16 @@
+var React = require('react');
+var jQuery = require('jquery');
+var FluxMixin = require('fluxxor').FluxMixin(React);
+var StoreWatchMixin = require('fluxxor').StoreWatchMixin;
+var Navigation = require('react-router').Navigation;
+var RouteHandler = require('react-router').RouteHandler;
+var Link = require('react-router').Link;
+
+var Connection = require('./connection').Connection;
+var Player = require('./player').Player;
+var DeviceActions = require('./deviceactions').DeviceActions;
+var Submission = require('./submission').Submission;
+
 var DeviceLibrary = React.createClass({
   render: function() {
     return (
@@ -88,3 +101,6 @@ var DeviceView = React.createClass({
         );
     }
 });
+
+module.exports.DeviceLibrary = DeviceLibrary;
+module.exports.DeviceView = DeviceView;

@@ -1,3 +1,24 @@
+var React = require('react');
+var ReactRouter = require('react-router');
+var Route = require('react-router').Route;
+var DefaultRoute = require('react-router').DefaultRoute;
+
+var flux = require('./app').flux;
+var View = require('./view').View;
+var Devices = require('./devices').Devices;
+var DeviceView = require('./deviceview').DeviceView;
+var DeviceLibrary = require('./deviceview').DeviceLibrary;
+var ArtistsView = require('./artists').ArtistsView;
+var AlbumsView = require('./albums').AlbumsView;
+var TracksView = require('./tracks').TracksView;
+var DeviceRename = require('./deviceactions').DeviceRename;
+var DeviceDelete = require('./deviceactions').DeviceDelete;
+var Apps = require('./apps').Apps;
+var AppCreate = require('./apps').AppCreate;
+var AppDetail = require('./apps').AppDetail;
+var Grants = require('./grants').Grants;
+var GrantDetail = require('./grants').GrantDetail;
+
 function mpStart(container) {
   window.socket = io(window.location.origin);
   flux.actions.startDevices();
@@ -28,3 +49,14 @@ function mpStart(container) {
 		React.render(React.createElement(Root, {flux: flux}), container);
 	});
 };
+
+function showReleases(container) {
+  var GHRelease = require('./ghrelease').GHRelease;
+  var main = React.createElement(GHRelease);
+  React.render(main, container);
+}
+
+module.exports = {
+  mpStart: mpStart,
+  showReleases: showReleases
+}

@@ -1,3 +1,10 @@
+var React = require('react');
+var jQuery = require('jquery');
+var Navigation = require('react-router').Navigation;
+var FluxMixin = require('fluxxor').FluxMixin(React);
+
+var LibraryState = require('./utils').LibraryState;
+
 var AlbumItem = React.createClass({
     mixins: [Navigation],
 
@@ -91,3 +98,5 @@ var AlbumsView = React.createClass({
         )
     }
 });
+
+module.exports.AlbumsView = AlbumsView;

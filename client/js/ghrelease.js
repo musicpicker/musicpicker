@@ -1,3 +1,6 @@
+var React = require('react');
+var jQuery = require('jquery');
+
 var GHRelease = React.createClass({
   getInitialState: function() {
     return {
@@ -45,3 +48,5 @@ var GHRelease = React.createClass({
     );
   }
 })
+
+module.exports.GHRelease = GHRelease;

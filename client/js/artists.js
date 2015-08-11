@@ -1,3 +1,10 @@
+var React = require('react');
+var jQuery = require('jquery');
+var FluxMixin = require('fluxxor').FluxMixin(React);
+var Navigation = require('react-router').Navigation;
+
+var LibraryState = require('./utils').LibraryState;
+
 var ArtistItem = React.createClass({
     mixins: [FluxMixin, Navigation],
 
@@ -75,3 +82,5 @@ var ArtistsView = React.createClass({
         );
     }
 });
+
+module.exports.ArtistsView = ArtistsView;

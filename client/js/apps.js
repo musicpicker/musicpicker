@@ -1,3 +1,8 @@
+var React = require('react');
+var jQuery = require('jquery');
+var Navigation = require('react-router').Navigation;
+var Link = require('react-router').Link;
+
 var Apps = React.createClass({
 	mixins: [Navigation],
 
@@ -287,3 +292,7 @@ var AppDetail = React.createClass({
 		);
 	}
 });
+
+module.exports.Apps = Apps;
+module.exports.AppCreate = AppCreate;
+module.exports.AppDetail = AppDetail;
