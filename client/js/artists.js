@@ -45,8 +45,8 @@ var ArtistsView = React.createClass({
 
     componentDidMount: function() {
         request.get("/api/Artists?device=" + this.props.params.id).end(function(err, res) {
-            var data = res.body;
             if (!err && res.ok) {
+                var data = res.body;
                 this.setState({artists: data, filtered: data});
             }
             else {
