@@ -1,5 +1,5 @@
 var React = require('react');
-var jQuery = require('jquery');
+var request = require('superagent');
 var FluxMixin = require('fluxxor').FluxMixin(React);
 var Navigation = require('react-router').Navigation;
 
@@ -44,15 +44,19 @@ var ArtistsView = React.createClass({
     },
 
     componentDidMount: function() {
-        jQuery.ajax("/api/Artists?device=" + this.props.params.id).done(function(data) {
-            this.setState({artists: data, filtered: data});
-        }.bind(this)).error(function(err) {
-            this.setState({error: true});
+        request.get("/api/Artists?device=" + this.props.params.id).end(function(err, res) {
+            var data = res.body;
+            if (!err && res.ok) {
+                this.setState({artists: data, filtered: data});
+            }
+            else {
+                this.setState({error: true});
+            }
         }.bind(this));
     },
 
     search: function() {
-        var filter = $(React.findDOMNode(this.refs.search)).val().toLowerCase();
+        var filter = React.findDOMNode(this.refs.search).value.toLowerCase();
         var filtered = this.state.artists.filter(function(item) {
             return item.Name.toLowerCase().includes(filter);
         });

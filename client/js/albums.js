@@ -1,5 +1,5 @@
 var React = require('react');
-var jQuery = require('jquery');
+var request = require('superagent');
 var Navigation = require('react-router').Navigation;
 var FluxMixin = require('fluxxor').FluxMixin(React);
 
@@ -50,11 +50,14 @@ var AlbumsView = React.createClass({
             var url = "/api/Albums?device=" + this.props.params.id + "&artist=" + artistId;
         }
 
-        jQuery.ajax(url).done(function(data) {
-            this.setState({albums: data, filtered: data});
-        }.bind(this)).error(function(err) {
-            this.setState({error: true});
-        }.bind(this));
+        request.get(url).end(function(err, res) {
+            if (!err && res.ok) {
+                this.setState({albums: res.body, filtered: res.body});
+            }
+            else {
+                this.setState({error: true});
+            }
+        }.bind(this))
     },
 
     componentDidMount: function() {
@@ -68,7 +71,7 @@ var AlbumsView = React.createClass({
     },
 
     search: function() {
-        var filter = $(React.findDOMNode(this.refs.search)).val().toLowerCase();
+        var filter = React.findDOMNode(this.refs.search).value.toLowerCase();
         var filtered = this.state.albums.filter(function(item) {
             return item.Name.toLowerCase().includes(filter);
         });

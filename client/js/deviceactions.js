@@ -1,5 +1,5 @@
 var React = require('react');
-var jQuery = require('jquery');
+var request = require('superagent');
 var Navigation = require('react-router').Navigation;
 var FluxMixin = require('fluxxor').FluxMixin(React);
 var Link = require('react-router').Link;
@@ -8,9 +8,7 @@ var DeviceDelete = React.createClass({
 	mixins: [Navigation, FluxMixin],
 
 	delete: function() {
-		jQuery.ajax('/api/Devices/' + this.props.params.id, {
-			method: 'DELETE'
-		}).done(function() {
+		request.del('/api/Devices/' + this.props.params.id).end(function() {
 			this.transitionTo('devices');
 		}.bind(this));
 	},
@@ -32,13 +30,10 @@ var DeviceRename = React.createClass({
 	mixins: [Navigation, FluxMixin],
 
 	rename: function() {
-		var name = $(React.findDOMNode(this.refs.name)).val();
-		jQuery.ajax('/api/Devices/' + this.props.params.id, {
-			method: 'PUT',
-      data: {
-      	Name: name
-      }
-		}).done(function() {
+		var name = React.findDOMNode(this.refs.name).value;
+		request.put('/api/Devices/' + this.props.params.id).send({
+			Name: name
+		}).end(function() {
 			this.transitionTo('devices');
 		}.bind(this));
 	},

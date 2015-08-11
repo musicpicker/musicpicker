@@ -1,5 +1,5 @@
 var React = require('react');
-var jQuery = require('jquery');
+var request = require('superagent');
 var FluxMixin = require('fluxxor').FluxMixin(React);
 
 var LibraryState = require('./utils').LibraryState;
@@ -23,10 +23,13 @@ var TracksView = React.createClass({
             var url = "/api/Tracks?device=" + this.props.params.id + "&album=" + albumId;
         }
 
-        jQuery.ajax(url).done(function(data) {
-            this.setState({tracks: data, filtered: data});
-        }.bind(this)).error(function(err) {
-            this.setState({error: true});
+        request.get(url).end(function(err, res) {
+            if (!err && res.ok) {
+                this.setState({tracks: res.body, filtered: res.body});
+            }
+            else {
+                this.setState({error: true});
+            }
         }.bind(this));
     },
 
@@ -41,7 +44,7 @@ var TracksView = React.createClass({
     },
 
     search: function() {
-        var filter = $(React.findDOMNode(this.refs.search)).val().toLowerCase();
+        var filter = React.findDOMNode(this.refs.search).value.toLowerCase();
         var filtered = this.state.tracks.filter(function(item) {
             return item.Name.toLowerCase().includes(filter);
         });

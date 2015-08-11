@@ -2,7 +2,7 @@ var React = require('react');
 var FluxMixin = require('fluxxor').FluxMixin(React);
 var StoreWatchMixin = require('fluxxor').StoreWatchMixin;
 var moment = require('moment');
-var jQuery = require('jquery');
+var request = require('superagent');
 
 var TrackInfo = React.createClass({
 	mixins: [FluxMixin],
@@ -36,7 +36,8 @@ var TrackInfo = React.createClass({
 	},
 
 	getMeta: function(trackId) {
-		jQuery.ajax('/api/Tracks/' + trackId).done(function(track) {
+		request.get('/api/Tracks/' + trackId).end(function(err, res) {
+			var track = res.body;
 			this.setState({
 				title: track.Name,
 				image: track.album.Artwork,

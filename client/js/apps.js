@@ -1,5 +1,5 @@
 var React = require('react');
-var jQuery = require('jquery');
+var request = require('superagent');
 var Navigation = require('react-router').Navigation;
 var Link = require('react-router').Link;
 
@@ -13,7 +13,8 @@ var Apps = React.createClass({
 	},
 
 	componentDidMount: function() {
-		jQuery.ajax('/api/apps').done(function(apps) {
+		request.get('/api/apps').end(function(err, res) {
+			var apps = res.body;
 			this.setState({apps: apps});
 		}.bind(this));
 	},
@@ -47,14 +48,11 @@ var AppCreate = React.createClass({
 
 	create: function(ev) {
 		ev.preventDefault();
-		name = $(React.findDOMNode(this.refs.name)).val();
+		name = React.findDOMNode(this.refs.name).value;
 
-		jQuery.ajax('/api/apps', {
-			method: 'POST',
-			data: {
-				name: name
-			}
-		}).done(function() {
+		request.post('/api/apps').send({
+			name: name
+		}).end(function() {
 			this.transitionTo('apps');
 		}.bind(this));
 	},
@@ -100,40 +98,45 @@ var AppDetail = React.createClass({
 	},
 
 	componentDidMount: function() {
-		jQuery.ajax('/api/apps/' + this.props.params.id).done(function(app) {
+		request.get('/api/apps/' + this.props.params.id).end(function(err, res) {
+			var app = res.body;
 			this.setState(app);
 		}.bind(this));
 	},
 
 	updateDescription: function(ev) {
 		ev.preventDefault();
-		var description = $(React.findDOMNode(this.refs.description)).val();
-		jQuery.ajax('/api/apps/' + this.props.params.id, {
-			method: 'PUT',
-			data: {
-				description: description
+		var description = React.findDOMNode(this.refs.description).value;
+		request.put('/api/apps/' + this.props.params.id).send({
+			description: description
+		}).end(function(err, res) {
+			var app = res.body;
+
+			if (res.ok) {
+				this.setState(app);
+				this.setState({error: null});
 			}
-		}).done(function(app) {
-			this.setState(app);
-			this.setState({error: null});
-		}.bind(this)).error(function(error) {
-			this.setState({error: error.responseText});
+			else {
+				this.setState({error: res.text});
+			}
 		}.bind(this));
 	},
 
 	updateRedirect: function(ev) {
 		ev.preventDefault();
-		jQuery.ajax('/api/apps/' + this.props.params.id, {
-			method: 'PUT',
-			data: {
-				redirect_uri: this.state.redirect_uri
+		request.put('/api/apps/' + this.props.params.id).send({
+			redirect_uri: this.state.redirect_uri
+		}).end(function(err, res) {
+			var app = res.body;
+
+			if (res.ok) {
+				this.setState(app);
+				this.setState({error: null});
 			}
-		}).done(function(app) {
-			this.setState(app);
-			this.setState({error: null});
-		}.bind(this)).error(function(error) {
-			this.setState({error: error.responseText});
-		}.bind(this));
+			else {
+				this.setState({error: res.text});
+			}
+		});
 	},
 
 	uriChange: function(ev) {
@@ -148,16 +151,17 @@ var AppDetail = React.createClass({
 			var enable_grant_token = false;
 		}
 
-		jQuery.ajax('/api/apps/' + this.props.params.id, {
-			method: 'PUT',
-			data: {
-				enable_grant_token: enable_grant_token
+		request.put('/api/apps/' + this.props.params.id).send({
+			enable_grant_token: enable_grant_token
+		}).end(function(err, res) {
+			var app = res.body;
+			if (res.ok) {
+				this.setState(app);
+				this.setState({error: null});
 			}
-		}).done(function(app) {
-			this.setState(app);
-			this.setState({error: null});
-		}.bind(this)).error(function(error) {
-			this.setState({error: error.responseText});
+			else {
+				this.setState({error: res.text});
+			}
 		}.bind(this));
 	},
 
@@ -169,23 +173,22 @@ var AppDetail = React.createClass({
 			var enable_grant_password = false;
 		}
 
-		jQuery.ajax('/api/apps/' + this.props.params.id, {
-			method: 'PUT',
-			data: {
-				enable_grant_password: enable_grant_password
+		request.put('/api/apps/' + this.props.params.id).send({
+			enable_grant_password: enable_grant_password
+		}).end(function(err, res) {
+			var app = res.body;
+			if (res.ok) {
+				this.setState(app);
+				this.setState({error: null});
 			}
-		}).done(function(app) {
-			this.setState(app);
-			this.setState({error: null});
-		}.bind(this)).error(function(error) {
-			this.setState({error: error.responseText});
-		}.bind(this));
+			else {
+				this.setState({error: res.text});
+			}
+		}.bind(this))
 	},
 
 	delete: function() {
-		jQuery.ajax('/api/apps/' + this.props.params.id, {
-			method: 'DELETE'
-		}).done(function() {
+		request.del('/api/apps/' + this.props.params.id).end(function() {
 			this.transitionTo('apps');
 		}.bind(this));
 	},

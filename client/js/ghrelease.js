@@ -1,5 +1,5 @@
 var React = require('react');
-var jQuery = require('jquery');
+var request = require('superagent');
 
 var GHRelease = React.createClass({
   getInitialState: function() {
@@ -9,15 +9,18 @@ var GHRelease = React.createClass({
   },
 
   componentDidMount: function() {
-    jQuery.get(
+    request.get(
       'https://api.github.com/repos/musicpicker/MusicPickerDevice/releases/latest'
-    ).then(function(data) {
-      var url = data.assets.filter(function(item) {
-        if (item.name === 'setup.exe') {
-          return true;
-        }
-      })[0].browser_download_url;
-      this.setState({windows: url});
+    ).end(function(err, res) {
+      if (!err) {
+        var data = res.body;
+        var url = data.assets.filter(function(item) {
+          if (item.name === 'setup.exe') {
+            return true;
+          }
+        })[0].browser_download_url;
+        this.setState({windows: url});
+      }
     }.bind(this));
   },
 

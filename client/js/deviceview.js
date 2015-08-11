@@ -1,5 +1,5 @@
 var React = require('react');
-var jQuery = require('jquery');
+var request = require('superagent');
 var FluxMixin = require('fluxxor').FluxMixin(React);
 var StoreWatchMixin = require('fluxxor').StoreWatchMixin;
 var Navigation = require('react-router').Navigation;
@@ -52,8 +52,8 @@ var DeviceView = React.createClass({
     },
 
     componentDidMount: function() {
-      jQuery.ajax('/api/Devices/' + this.props.params.id).done(function(data) {
-        this.setState({name: data.Name});
+      request.get('/api/Devices/' + this.props.params.id).end(function(err, res) {
+        this.setState({name: res.body.Name});
       }.bind(this));
     },
 

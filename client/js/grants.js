@@ -1,5 +1,5 @@
 var React = require('react');
-var jQuery = require('jquery');
+var request = require('superagent');
 var Navigation = require('fluxxor').Navigation;
 var Link = require('react-router').Link;
 
@@ -13,8 +13,8 @@ var Grants = React.createClass({
 	},
 
 	componentDidMount: function() {
-		jQuery.ajax('/api/grants').done(function(grants) {
-			this.setState({grants: grants});
+		request.get('/api/grants').end(function(err, res) {
+			this.setState({grants: res.body});
 		}.bind(this));
 	},
 
@@ -52,15 +52,13 @@ var GrantDetail = React.createClass({
 	},
 
 	componentDidMount: function() {
-		jQuery.ajax('/api/grants/' + this.props.params.token).done(function(grant) {
-			this.setState(grant);
+		request.get('/api/grants/' + this.props.params.token).end(function(err, res) {
+			this.setState(res.body);
 		}.bind(this));
 	},
 
 	delete: function() {
-		jQuery.ajax('/api/grants/' + this.props.params.token, {
-			method: 'DELETE'
-		}).done(function() {
+		request.del('/api/grants/' + this.props.params.token).end(function() {
 			this.transitionTo('grants');
 		}.bind(this));
 	},

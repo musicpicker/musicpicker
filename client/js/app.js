@@ -1,5 +1,5 @@
 var Fluxxor = require('fluxxor');
-var jQuery = require('jquery');
+var request = require('superagent');
 
 var actions = {
     receiveDeviceState: function(deviceState) {
@@ -82,8 +82,8 @@ var DeviceStateStore = Fluxxor.createStore({
 
     getArtwork: function(deviceState) {
       if (deviceState.Current !== null) {
-        jQuery.ajax('/api/Tracks/' + deviceState.Current).done(function(track) {
-          this.devices[deviceState.Device].artwork = track.album.Artwork;
+        request.get('/api/Tracks/' + deviceState.Current).end(function(err, res) {
+          this.devices[deviceState.Device].artwork = res.body.album.Artwork;
         }.bind(this));
 
         this.emit('change');
@@ -138,7 +138,9 @@ var AuthStore = Fluxxor.createStore({
 
     startDevices: function() {
       socket.on('connect', function() {
-        jQuery.ajax('/socket-token').done(function(token) {
+        request.get('/socket-token').end(function(err, res) {
+          var token = res.text;
+
           socket.emit('authentication', token);
           socket.on('authenticated', function() {
             socket.on('SetState', function(state) {
@@ -149,7 +151,9 @@ var AuthStore = Fluxxor.createStore({
               flux.actions.receiveSubmissionState(state);
             });
 
-            jQuery.ajax('/api/Devices').done(function(devices) {
+            request.get('/api/Devices').end(function(err, res) {
+              var devices = res.body;
+
               devices.forEach(function(device) {
                 socket.on('ClientRegistered', function() {
                   socket.emit('GetState', device.Id);
@@ -158,7 +162,7 @@ var AuthStore = Fluxxor.createStore({
               }.bind(this));
             }.bind(this));
           }.bind(this));
-        })
+        }.bind(this))
       }.bind(this));
       
       this.emit('change');
