@@ -20,7 +20,6 @@ var Grants = require('./grants').Grants;
 var GrantDetail = require('./grants').GrantDetail;
 
 function mpStart(container) {
-  window.socket = io(window.location.origin);
   flux.actions.startDevices();
 
   var routes = (

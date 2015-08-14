@@ -1,5 +1,6 @@
 var Fluxxor = require('fluxxor');
 var request = require('superagent');
+var socket = require('socket.io-client')(window.location.origin);
 
 var actions = {
     receiveDeviceState: function(deviceState) {
@@ -115,19 +116,19 @@ var DeviceStateStore = Fluxxor.createStore({
     },
 
     sendQueue: function(payload) {
-        window.socket.emit('Queue', {DeviceId: payload.device, TrackIds: payload.tracks});
+        socket.emit('Queue', {DeviceId: payload.device, TrackIds: payload.tracks});
     },
 
     sendPause: function(deviceId) {
-      window.socket.emit('Pause', {DeviceId: deviceId});
+      socket.emit('Pause', {DeviceId: deviceId});
     },
 
     sendPlay: function(deviceId) {
-      window.socket.emit('Play', {DeviceId: deviceId});
+      socket.emit('Play', {DeviceId: deviceId});
     },
 
     sendNext: function(deviceId) {
-      window.socket.emit('RequestNext', {DeviceId: deviceId});
+      socket.emit('RequestNext', {DeviceId: deviceId});
     }
 });
 
