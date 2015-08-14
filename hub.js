@@ -128,6 +128,7 @@ function deviceEvents(io, socket, connectionId) {
 
   playback.on('RequestNext', function(deviceId) {
     io.sockets.to(connectionId).emit('Stop');
+    io.sockets.to(connectionId).emit('RequestNext');
   });
 }
 

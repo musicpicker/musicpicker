@@ -40,6 +40,7 @@
     "passport-http-bearer": "~1.0.1",
     "passport-local": "~1.0.0",
     "passport-oauth2-resource-owner-password": "~1.0.0",
+    "query-string": "^2.4.0",
     "react": "~0.13.3",
     "react-router": "~0.13.3",
     "redis": "^0.12.1",

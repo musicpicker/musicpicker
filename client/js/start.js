@@ -18,6 +18,7 @@ var AppCreate = require('./apps').AppCreate;
 var AppDetail = require('./apps').AppDetail;
 var Grants = require('./grants').Grants;
 var GrantDetail = require('./grants').GrantDetail;
+var ClientToken = require('./utils').ClientToken;
 
 function mpStart(container) {
   flux.actions.startDevices();
@@ -41,6 +42,7 @@ function mpStart(container) {
       <Route name="app-detail" path="apps/:id" handler={AppDetail}/>
       <Route name="grants" path="grants" handler={Grants}/>
       <Route name="grant-detail" path="grants/:token" handler={GrantDetail}/>
+      <Route name="client-token" path="client_token" handler={ClientToken}/>
     </Route>
   );
 

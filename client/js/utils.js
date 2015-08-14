@@ -1,4 +1,37 @@
 var React = require('react');
+var qs = require('query-string');
+
+var ClientToken = React.createClass({
+  getInitialState: function() {
+    return {
+      error: false
+    }
+  },
+
+  componentDidMount: function() {
+    if (location.hash !== '' && qs.parse(location.hash.substr(1)).error == undefined) {
+      var bearer = qs.parse(location.hash.substr(1)).access_token;
+      window.require('ipc').send('auth-token', bearer);
+      this.setState({error: false});
+    }
+    else {
+      this.setState({error: true});
+    }
+  },
+
+  render: function() {
+    if (!this.state.error) {
+      return (
+        <p>Please wait while we're redirecting you to the application</p>
+      )
+    }
+    else {
+      return (
+        <p><b>Error.</b> You must authorize the application before using it.</p>
+      )
+    }
+  }
+});
 
 	var LibraryState = React.createClass({
     render: function() {
@@ -47,3 +80,4 @@ var React = require('react');
 });
 
 module.exports.LibraryState = LibraryState;
+module.exports.ClientToken = ClientToken;
