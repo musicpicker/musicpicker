@@ -143,7 +143,7 @@ var AuthStore = Fluxxor.createStore({
           var token = res.text;
 
           socket.emit('authentication', token);
-          socket.on('authenticated', function() {
+          socket.on('user', function() {
             socket.on('SetState', function(state) {
               flux.actions.receiveDeviceState(state);
             });

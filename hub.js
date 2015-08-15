@@ -340,6 +340,7 @@ function postAuthenticate(socket, token) {
         Id: payload.deviceId
       }).fetch().then(function(user) {
         socket.client.user = user;
+        socket.emit('user', user.id);
       })
     }
     else {
@@ -347,11 +348,13 @@ function postAuthenticate(socket, token) {
         Token: token
       }).fetch({require: true}).then(function(user) {
         socket.client.user = user;
+        socket.emit('user', user.id);
       }).catch(function() {
         new models.OauthToken({
           token: token
         }).fetch({require: true, withRelated: ['client', 'user']}).then(function(token) {
           socket.client.user = token.related('user');
+          socket.emit('user', token.related('user').id);
         });
       });
     }
